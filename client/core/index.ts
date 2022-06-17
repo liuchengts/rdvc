@@ -15,5 +15,6 @@ clientSocketService.init(connection)
 // app.listen(port, () => {
 //     console.log("client core express:", port);
 // });
+console.log("client core start");
 
 

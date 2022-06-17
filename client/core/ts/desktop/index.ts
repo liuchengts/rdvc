@@ -2,7 +2,7 @@ import {clientSocketService} from "../socket/client";
 import {compressionService} from "../common/images";
 // @ts-ignore
 import screenshotDesktop from "screenshot-desktop";
-import {Response, Screen} from "../common/data";
+import {Response, Screen} from "../../../../common/data";
 
 export class DesktopScreen {
     constructor(public rooms: string[],
@@ -148,9 +148,11 @@ class DesktopServiceImpl implements DesktopService {
             return
         }
         if (quality == null) quality = this.quality
+        console.log("压缩前的图片大小:", imgBuffer.length / 1024, "kb")
         //将图片编码压缩 imgStr
         let promise = await compressionService.compImg(imgBuffer, quality, width, height)
         let buffer = Buffer.from(promise.binary.buffer)
+        console.log("压缩后的图片大小:", buffer.length / 1024, "kb")
         let extension = promise.extension
         let screen = new Screen(this.socketId, buffer, quality, extension, width, height)
         this.desktops.push(new DesktopScreen(this.rooms, screen, new Date()))
@@ -181,7 +183,7 @@ class DesktopServiceImpl implements DesktopService {
         }
     }
 
-    desktopInit(socketId: string) {
+    desktopInit(socketId?: string) {
         if (this.isTask) {
             console.error("desktop 任务已启动")
             return

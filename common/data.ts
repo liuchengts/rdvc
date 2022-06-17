@@ -1,3 +1,4 @@
+// @ts-ignore
 import {gZipService} from "./gzip";
 
 /**
@@ -29,7 +30,7 @@ export class Screen {
  * @param data 压缩加密后的数据
  * @param callback 处理函数
  */
-export function processResponse<T>(data: string, callback: Function) {
+export function processResponse<T>(data: Buffer, callback: Function) {
     gZipService.inflate(data, (result: string) => {
         let response = JSON.parse(result) as Response<T>
         if (response.successful) {
@@ -47,7 +48,7 @@ export function processResponse<T>(data: string, callback: Function) {
  */
 export function packageResponse(response: Response<any>, callback: Function) {
     let msg = JSON.stringify(response)
-    gZipService.deflate(msg, (result: string) => {
+    gZipService.deflate(msg, (result: Buffer) => {
         callback(result)
     })
 }

@@ -9,8 +9,11 @@
     "allowJs": true
   },
   "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
+    "ts/**/*.ts",
+    "ts/**/*.tsx",
+    "ts/**/*.tsx",
+    "../../common/*.tsx",
+    "../../common/*.ts"
   ],
   "exclude": [
     "node_modules"

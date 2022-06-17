@@ -3,7 +3,7 @@ import * as zlib from "zlib";
 interface GZipService {
     deflate(input: string, callback: Function): void
 
-    inflate(input: string, callback: Function): void
+    inflate(input: Buffer, callback: Function): void
 }
 
 class GZipServiceImpl implements GZipService {
@@ -13,11 +13,11 @@ class GZipServiceImpl implements GZipService {
                 console.error("deflate失败", er)
                 return
             }
-            callback(deflate_buf.toString())
+            callback(deflate_buf)
         });
     }
 
-    inflate(input: string, callback: Function) {
+    inflate(input: Buffer, callback: Function) {
         zlib.inflate(input, (er, inflat_buf) => {
             if (er || inflat_buf == null) {
                 console.error("inflate失败", er)

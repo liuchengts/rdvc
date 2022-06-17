@@ -1,7 +1,9 @@
 import {io, Socket} from "socket.io-client";
-import {Events} from "../common/events";
+// @ts-ignore
+import {Events} from "../../../../common/events";
 import {desktopService} from "../desktop";
-import {packageResponse, processResponse, Response, Screen} from "../common/data";
+// @ts-ignore
+import {packageResponse, processResponse, Response, Screen} from "../../../../common/data";
 
 interface ClientSocketService {
 
@@ -37,7 +39,7 @@ class ClientSocketServiceImpl implements ClientSocketService {
     }
 
     subscribe(event: Events, process?: Function) {
-        this.socket?.on(event, data => {
+        this.socket?.on(event, (data: any) => {
             if (process != null) {
                 process(data)
             }
@@ -45,7 +47,7 @@ class ClientSocketServiceImpl implements ClientSocketService {
     }
 
     subscribeRoom(roomId: string, process?: Function) {
-        this.socket?.on(roomId, data => {
+        this.socket?.on(roomId, (data: any) => {
             if (process != null) {
                 process(roomId, data)
             }
@@ -70,14 +72,16 @@ class ClientSocketServiceImpl implements ClientSocketService {
     }
 
     replyToServer(event: Events, response: Response<any>): void {
-        packageResponse(response, (result: string) => {
+        packageResponse(response, (result: Buffer) => {
             this.socket?.compress(true).emit(event, result)
         })
     }
 
     pushToRoom(roomIds: string[], response: Response<any>) {
-        packageResponse(response, (result: string) => {
+        packageResponse(response, (result: Buffer) => {
             roomIds.forEach(roomId => {
+                console.log("向房间[", roomId, "]发消息,长度:", result.length / 1024, "kb")
+                // this.socket?.emit(roomId, result)
                 this.socket?.compress(true).emit(roomId, result)
             })
         })
@@ -85,15 +89,14 @@ class ClientSocketServiceImpl implements ClientSocketService {
 
     defaultSubscribe() {
         this.subscribe(Events.CONNECT, (data: any) => {
-            // console.log(Events.CONNECT, "=>", this.socket);
-            // let id = this.socket.id
-            // //开始task
-            // desktopService.desktopInit(id)
+            console.log(Events.CONNECT, "=>", this.socket?.id);
+            //开始task
+            desktopService.desktopInit(this.socket?.id)
         })
-        this.subscribe(Events.INIT, (data: string) => {
+        this.subscribe(Events.INIT, (data: Buffer) => {
             processResponse(data, (response: Response<string>) => {
                 let roomId = response.data
-                console.log("[", roomId, "]=>", data);
+                console.log(Events.INIT, "=>", response);
                 if (roomId == null) {
                     console.log("连接成功")
                     return

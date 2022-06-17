@@ -1,8 +1,10 @@
 import {Server} from "socket.io";
 import * as http from "http";
-import {Events} from "../common/events";
+// @ts-ignore
+import {Events} from "../../../common/events";
 import {roomService} from "./rooms";
-import {Response,packageResponse} from "../common/data";
+// @ts-ignore
+import {Response, packageResponse, processResponse, Screen} from "../../../common/data";
 
 interface ClientSocketService {
     /**
@@ -131,9 +133,19 @@ class ServerSocketServiceImpl implements ServerSocketService {
             this.pushToClientLocal(clientSocket, Events.INIT, new Response(true, room.index,
                 "欢迎连接socket"))
             this.defaultSubscribe(clientSocket)
+            this.subscribeRoom(clientSocket, room.index)
         });
         this.socket.listen(port)
         console.log("ServerSocket:", port)
+    }
+
+    subscribeRoom(clientSocket: ClientSocket, roomId: string) {
+        clientSocket.client.on(roomId, (data: Buffer) => {
+            console.log("收到房间消息[", roomId + "]长度:", data.length / 1024, "kb")
+            processResponse<Screen>(data, (response: Response<Screen>) => {
+                console.log("收到房间消息[", roomId + "]=>", response.data)
+            })
+        })
     }
 
     subscribe(client: Server, event: Events, process?: Function) {
@@ -150,7 +162,7 @@ class ServerSocketServiceImpl implements ServerSocketService {
             console.log(event, "推送到[", clientSocket.id, "]数据长度:", msg.length)
             clientSocket.client.compress(true).emit(event, msg);
         } else {
-            packageResponse(response, (result: string) => {
+            packageResponse(response, (result: Buffer) => {
                 console.log(event, "推送到[", clientSocket.id, "]数据长度:", result.length)
                 clientSocket.client.compress(true).emit(event, result)
             })
@@ -163,7 +175,7 @@ class ServerSocketServiceImpl implements ServerSocketService {
             console.log(event, "推送到[", socketId, "]数据长度:", msg.length)
             this.socket?.compress(true).to(socketId).emit(event, msg);
         } else {
-            packageResponse(response, (result: string) => {
+            packageResponse(response, (result: Buffer) => {
                 console.log(event, "推送到[", socketId, "]数据长度:", result.length)
                 this.socket?.compress(true).emit(event, result)
             })
@@ -171,7 +183,7 @@ class ServerSocketServiceImpl implements ServerSocketService {
     }
 
     pushToClients(socketIds: string[], event: Events, response: Response<any>) {
-        packageResponse(response, (result: string) => {
+        packageResponse(response, (result: Buffer) => {
             socketIds.forEach(socketId => {
                 console.log(event, "推送到[", socketId, "]数据长度:", result.length)
                 this.socket?.compress(true).to(socketId).emit(event, result);
