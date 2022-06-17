@@ -1,18 +1,15 @@
-import {Events} from "../common/events";
-import {serverSocketService} from "../socket/server";
+import {clientSocketService} from "../socket/client";
 import {compressionService} from "../common/images";
 // @ts-ignore
 import screenshotDesktop from "screenshot-desktop";
-import {Response, Status} from "../common/data";
+import {Response, Screen, ServiceType} from "../common/data";
 
 export class DesktopScreen {
     constructor(public rooms: string[],
-                public events: Events,
                 public screen: Screen,
                 public time: Date) {
     }
 }
-
 
 
 /**
@@ -84,10 +81,9 @@ interface DesktopService {
 
     /**
      * 存储需要推的桌面图像（在这里进行图像压缩转码）
-     * @param events 事件
      * @param imgBuffer 原始图像buffer
      */
-    storage(events: Events, imgBuffer: Buffer): void
+    storage(imgBuffer: Buffer): void
 
     /**
      * 获得一个即将要推送的对象
@@ -103,11 +99,13 @@ interface DesktopService {
      * 模块功能初始化
      * 在这里会触发截屏定时器
      * 由截屏定时器推动本模块所有后续业务
+     * @param socketId 服务器分配的 socketId
      */
-    desktopInit(): void
+    desktopInit(socketId: string): void
 }
 
 class DesktopServiceImpl implements DesktopService {
+    private socketId?: string
     /**
      * 存储的待推送桌面图像
      */
@@ -137,7 +135,12 @@ class DesktopServiceImpl implements DesktopService {
         this.rooms.push(roomId)
     }
 
-    async storage(events: Events, imgBuffer: Buffer, quality?: number, width?: number, height?: number) {
+    async storage(imgBuffer: Buffer, quality?: number, width?: number, height?: number) {
+        if (this.socketId == undefined) {
+            console.warn("没有 socketId")
+            screenService.suspend()
+            return
+        }
         if (this.desktops.length >= this.desktopsMax) {
             console.warn("desktops超过上限,放弃本次增加:", new Date())
             screenService.suspend()
@@ -148,8 +151,8 @@ class DesktopServiceImpl implements DesktopService {
         let promise = await compressionService.compImg(imgBuffer, quality, width, height)
         let buffer = Buffer.from(promise.binary.buffer)
         let extension = promise.extension
-        let screen = new Screen(buffer, quality, extension, width, height)
-        this.desktops.push(new DesktopScreen(this.rooms, events, screen, new Date()))
+        let screen = new Screen(this.socketId, buffer, quality, extension, width, height)
+        this.desktops.push(new DesktopScreen(this.rooms, screen, new Date()))
         this.desktops.forEach(d => {
             console.log("desktops中的元素：", d.time)
         })
@@ -170,16 +173,21 @@ class DesktopServiceImpl implements DesktopService {
             return
         }
 
-        serverSocketService.pushToClients(desktopScreen.rooms, desktopScreen.events,
-            new Response(Status.OK, desktopScreen.screen))
+        clientSocketService.pushToRoom(desktopScreen.rooms,
+            new Response(true, ServiceType.SCREEN, desktopScreen.screen))
         if (this.desktops.length < this.desktopsMax) {
             screenService.continued()
         }
     }
 
-    desktopInit() {
+    desktopInit(socketId: string) {
+        if (socketId == null) {
+            console.error("没有 socketId 不启动 desktop ")
+            return
+        }
+        this.socketId = socketId
         screenService.startScreenshotTimer(((imgBuffer: Buffer): void => {
-            this.storage(Events.SCREEN, imgBuffer).then(() => {
+            this.storage(imgBuffer).then(() => {
                 console.log("压缩存储成功")
                 this.push()
             })

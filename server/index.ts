@@ -1,7 +1,7 @@
 // @ts-ignore
 import express from "express";
 import {engine} from "express-handlebars";
-import {router} from "./routers/index";
+import {router} from "./routers";
 import {createServer} from "http";
 import {serverSocketService} from "./ts/socket/server";
 

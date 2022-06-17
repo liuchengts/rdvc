@@ -1,10 +1,9 @@
 import {Server} from "socket.io";
 import * as http from "http";
 import {Events} from "../common/events";
-import {desktopService} from "../desktop";
 import {roomService} from "./rooms";
 import {gZipService} from "../common/gzip";
-import {Response, Status} from "../common/data";
+import {Response} from "../common/data";
 
 interface ClientSocketService {
     /**
@@ -125,24 +124,22 @@ class ServerSocketServiceImpl implements ServerSocketService {
             let clientSocket = clientSocketService.add(client.id, client)
             // 客户端的 socket 对象
             this.pushToClientLocal(clientSocket, Events.CONNECT,
-                new Response(Status.OK, "", "欢迎连接socket"), false)
+                new Response(true, "", "欢迎连接socket"), false)
             let room = roomService.joinRoom(clientSocket)
             if (room != undefined) {
-                desktopService.addRooms(room.index)
-                this.pushToClientLocal(clientSocket, Events.INIT, new Response(Status.OK, room.index))
+                this.pushToClientLocal(clientSocket, Events.INIT, new Response(true, room.index))
             } else {
                 console.error("desktop 加入房间失败")
-                this.pushToClientLocal(clientSocket, Events.INIT, new Response(Status.ERROR, "",
+                this.pushToClientLocal(clientSocket, Events.INIT, new Response(false, "",
                     "desktop 加入房间失败"))
             }
             this.defaultSubscribe(clientSocket)
         });
         this.socket.listen(port)
         console.log("ServerSocket:", port)
-        desktopService.desktopInit()
     }
 
-    subscribe(client: Server, event: Events, process?: Function) {
+    subscribe(client: any, event: Events, process?: Function) {
         client.on(event, data => {
             if (process != null) {
                 process(data)
@@ -187,22 +184,13 @@ class ServerSocketServiceImpl implements ServerSocketService {
     }
 
     defaultSubscribe(clientSocket: ClientSocket) {
-        this.subscribe(clientSocket.client, Events.INIT, (data: Server) => {
-            console.log("#socket server:", Events.INIT, data);
-        })
-        this.subscribe(clientSocket.client, Events.DISCONNECT, (data: Server) => {
+        this.subscribe(clientSocket.client, Events.DISCONNECT, (data: any) => {
             console.log("#socket server:", Events.DISCONNECT);
+
         })
         this.subscribe(clientSocket.client, Events.ERROR, (data: Server) => {
             console.log("#socket server:", Events.ERROR, "=>", data);
         })
-        this.subscribe(clientSocket.client, Events.MESSAGE, (data: Server) => {
-            console.log("#socket server:", Events.MESSAGE, data);
-        })
-        this.subscribe(clientSocket.client, Events.SCREEN, (data: Server) => {
-            console.log("#socket server:", Events.SCREEN, data);
-        })
-
     }
 }
 
