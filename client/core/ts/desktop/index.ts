@@ -2,7 +2,7 @@ import {clientSocketService} from "../socket/client";
 import {compressionService} from "../common/images";
 // @ts-ignore
 import screenshotDesktop from "screenshot-desktop";
-import {Response, Screen, ServiceType} from "../common/data";
+import {Response, Screen} from "../common/data";
 
 export class DesktopScreen {
     constructor(public rooms: string[],
@@ -105,6 +105,7 @@ interface DesktopService {
 }
 
 class DesktopServiceImpl implements DesktopService {
+    private isTask = false
     private socketId?: string
     /**
      * 存储的待推送桌面图像
@@ -174,18 +175,23 @@ class DesktopServiceImpl implements DesktopService {
         }
 
         clientSocketService.pushToRoom(desktopScreen.rooms,
-            new Response(true, ServiceType.SCREEN, desktopScreen.screen))
+            new Response(true, desktopScreen.screen))
         if (this.desktops.length < this.desktopsMax) {
             screenService.continued()
         }
     }
 
     desktopInit(socketId: string) {
+        if (this.isTask) {
+            console.error("desktop 任务已启动")
+            return
+        }
         if (socketId == null) {
             console.error("没有 socketId 不启动 desktop ")
             return
         }
         this.socketId = socketId
+        this.isTask = true
         screenService.startScreenshotTimer(((imgBuffer: Buffer): void => {
             this.storage(imgBuffer).then(() => {
                 console.log("压缩存储成功")

@@ -1,7 +1,7 @@
 import {io, Socket} from "socket.io-client";
 import {Events} from "../common/events";
 import {desktopService} from "../desktop";
-import {packageResponse, processResponse, Response, Screen, ServiceType} from "../common/data";
+import {packageResponse, processResponse, Response, Screen} from "../common/data";
 
 interface ClientSocketService {
 
@@ -66,7 +66,7 @@ class ClientSocketServiceImpl implements ClientSocketService {
     }
 
     joinRoom(roomId: string) {
-        this.replyToServer(Events.INIT, new Response<string>(true, ServiceType.APPLY, roomId))
+        this.replyToServer(Events.INIT, new Response<string>(true, roomId))
     }
 
     replyToServer(event: Events, response: Response<any>): void {
@@ -85,24 +85,25 @@ class ClientSocketServiceImpl implements ClientSocketService {
 
     defaultSubscribe() {
         this.subscribe(Events.CONNECT, (data: any) => {
-            console.log(Events.CONNECT, "=>", data);
-            //开始task
-            desktopService.desktopInit(data.socketId)
+            // console.log(Events.CONNECT, "=>", this.socket);
+            // let id = this.socket.id
+            // //开始task
+            // desktopService.desktopInit(id)
         })
         this.subscribe(Events.INIT, (data: string) => {
-            console.log(Events.INIT, "=>", data.length);
             processResponse(data, (response: Response<string>) => {
                 let roomId = response.data
                 console.log("[", roomId, "]=>", data);
-                if (roomId == undefined) {
-                    console.error("没有房间号,忽略本次处理(需要请求服务器重新下发roomId)")
+                if (roomId == null) {
+                    console.log("连接成功")
                     return
+                } else {
+                    //将桌面添加房间订阅
+                    desktopService.addRooms(roomId)
+                    //订阅房间
+                    this.subscribeRoom(roomId, (roomId: string, data: string) =>
+                        this.roomProcess(roomId, data))
                 }
-                //将桌面添加房间订阅
-                desktopService.addRooms(roomId)
-                //订阅房间
-                this.subscribeRoom(roomId, (roomId: string, data: string) =>
-                    this.roomProcess(roomId, data))
             })
         })
         this.subscribe(Events.DISCONNECT, (data: any) => {

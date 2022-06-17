@@ -1,18 +1,10 @@
 import {gZipService} from "./gzip";
 
-export enum ServiceType {
-    REPLY = "reply", // 向服务器发送回复 其他人不可见
-    APPLY = "apply", // 向服务器发出申请 其他人不可见
-    SCREEN = "screen", // 群发到room
-
-}
-
 /**
  * 顶级数据返回模型
  */
 export class Response<T> {
     constructor(public successful: boolean,
-                public type: ServiceType,
                 public data?: T,
                 public message?: string) {
     }

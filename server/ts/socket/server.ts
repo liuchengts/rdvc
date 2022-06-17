@@ -2,8 +2,7 @@ import {Server} from "socket.io";
 import * as http from "http";
 import {Events} from "../common/events";
 import {roomService} from "./rooms";
-import {gZipService} from "../common/gzip";
-import {Response} from "../common/data";
+import {Response,packageResponse} from "../common/data";
 
 interface ClientSocketService {
     /**
@@ -122,24 +121,22 @@ class ServerSocketServiceImpl implements ServerSocketService {
         this.socket.on(Events.CONNECTION, client => {
             console.log("#socket server: welcome", Events.CONNECTION, "=>", client.id);
             let clientSocket = clientSocketService.add(client.id, client)
-            // 客户端的 socket 对象
-            this.pushToClientLocal(clientSocket, Events.CONNECT,
-                new Response(true, "", "欢迎连接socket"), false)
             let room = roomService.joinRoom(clientSocket)
-            if (room != undefined) {
-                this.pushToClientLocal(clientSocket, Events.INIT, new Response(true, room.index))
-            } else {
+            if (room == undefined) {
                 console.error("desktop 加入房间失败")
-                this.pushToClientLocal(clientSocket, Events.INIT, new Response(false, "",
+                this.pushToClientLocal(clientSocket, Events.INIT, new Response(false, null,
                     "desktop 加入房间失败"))
+                return
             }
+            this.pushToClientLocal(clientSocket, Events.INIT, new Response(true, room.index,
+                "欢迎连接socket"))
             this.defaultSubscribe(clientSocket)
         });
         this.socket.listen(port)
         console.log("ServerSocket:", port)
     }
 
-    subscribe(client: any, event: Events, process?: Function) {
+    subscribe(client: Server, event: Events, process?: Function) {
         client.on(event, data => {
             if (process != null) {
                 process(data)
@@ -148,34 +145,33 @@ class ServerSocketServiceImpl implements ServerSocketService {
     }
 
     pushToClientLocal(clientSocket: ClientSocket, event: Events, response: Response<any>, isDeflate?: boolean) {
-        let msg = JSON.stringify(response)
         if (isDeflate != null && !isDeflate) {
+            let msg = JSON.stringify(response)
             console.log(event, "推送到[", clientSocket.id, "]数据长度:", msg.length)
             clientSocket.client.compress(true).emit(event, msg);
         } else {
-            gZipService.deflate(msg, (result: string) => {
+            packageResponse(response, (result: string) => {
                 console.log(event, "推送到[", clientSocket.id, "]数据长度:", result.length)
-                clientSocket.client.compress(true).emit(event, result);
+                clientSocket.client.compress(true).emit(event, result)
             })
         }
     }
 
     pushToClient(socketId: string, event: Events, response: Response<any>, isDeflate?: boolean) {
-        let msg = JSON.stringify(response)
         if (isDeflate != null && !isDeflate) {
+            let msg = JSON.stringify(response)
             console.log(event, "推送到[", socketId, "]数据长度:", msg.length)
             this.socket?.compress(true).to(socketId).emit(event, msg);
         } else {
-            gZipService.deflate(msg, (result: string) => {
+            packageResponse(response, (result: string) => {
                 console.log(event, "推送到[", socketId, "]数据长度:", result.length)
-                this.socket?.compress(true).to(socketId).emit(event, result);
+                this.socket?.compress(true).emit(event, result)
             })
         }
     }
 
     pushToClients(socketIds: string[], event: Events, response: Response<any>) {
-        let msg = JSON.stringify(response)
-        gZipService.deflate(msg, (result: string) => {
+        packageResponse(response, (result: string) => {
             socketIds.forEach(socketId => {
                 console.log(event, "推送到[", socketId, "]数据长度:", result.length)
                 this.socket?.compress(true).to(socketId).emit(event, result);
@@ -186,7 +182,6 @@ class ServerSocketServiceImpl implements ServerSocketService {
     defaultSubscribe(clientSocket: ClientSocket) {
         this.subscribe(clientSocket.client, Events.DISCONNECT, (data: any) => {
             console.log("#socket server:", Events.DISCONNECT);
-
         })
         this.subscribe(clientSocket.client, Events.ERROR, (data: Server) => {
             console.log("#socket server:", Events.ERROR, "=>", data);

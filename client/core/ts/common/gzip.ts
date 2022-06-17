@@ -8,20 +8,20 @@ interface GZipService {
 
 class GZipServiceImpl implements GZipService {
     deflate(input: string, callback: Function) {
-        console.log("deflate input",input.length)
         zlib.deflate(input, (er, deflate_buf) => {
-            if (er) {
+            if (er || deflate_buf == null) {
                 console.error("deflate失败", er)
+                return
             }
-            console.log("deflate_buf",deflate_buf.length)
             callback(deflate_buf.toString())
         });
     }
 
     inflate(input: string, callback: Function) {
         zlib.inflate(input, (er, inflat_buf) => {
-            if (er) {
-                console.error("deflate失败", er)
+            if (er || inflat_buf == null) {
+                console.error("inflate失败", er)
+                return
             }
             callback(inflat_buf.toString())
         });
