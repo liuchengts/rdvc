@@ -1,0 +1,36 @@
+{
+  "name": "remote-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint"
+  },
+  "dependencies": {
+    "screenshot-desktop": "^1.12.7",
+    "@squoosh/lib": "^0.4.0",
+    "axios": "^0.26.1",
+    "core-js": "^3.8.3",
+    "element-plus": "^2.1.9",
+    "socket.io-client": "^4.5.1",
+    "bufferutil": "^4.0.6",
+    "utf-8-validate": "^5.0.9",
+    "ts-md5": "^1.2.11",
+    "vue": "^3.2.13",
+    "vue-router": "^4.0.3",
+    "vue3-cookies": "^1.0.6",
+    "vuex": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/screenshot-desktop": "^1.12.0",
+    "@vue/cli-plugin-babel": "~5.0.0",
+    "@vue/cli-plugin-router": "~5.0.0",
+    "@vue/cli-plugin-typescript": "~5.0.0",
+    "@vue/cli-plugin-vuex": "~5.0.0",
+    "@vue/cli-service": "~5.0.0",
+    "less": "^4.0.0",
+    "less-loader": "^8.0.0",
+    "typescript": "~4.5.5"
+  }
+}
