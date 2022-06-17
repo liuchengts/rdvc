@@ -13,15 +13,7 @@ export class DesktopScreen {
     }
 }
 
-export class Screen {
-    constructor(
-        public imgBuffer: Buffer,
-        public quality: number,
-        public extension: string,
-        public width?: number,
-        public height?: number) {
-    }
-}
+
 
 /**
  * 截取屏幕的定时，单位ms

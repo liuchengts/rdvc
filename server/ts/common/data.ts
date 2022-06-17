@@ -1,4 +1,3 @@
-import {Screen} from "../desktop";
 
 export enum Status {
     OK = "ok",
