@@ -60,12 +60,14 @@ class RoomServiceImpl implements RoomService {
     private lastIndex = 0;
 
     leaveRoom(client: ClientSocket, index?: string, room?: Room): void {
-        let rooms = this.getRoom(index, room)
-        if (rooms == undefined) return
-        rooms.leave(client)
-        if (rooms.clients == undefined || rooms.clients.length <= 0) {
-            this.del(index, room)
+        let leaveRoom = this.getRoom(index, room)
+        if (leaveRoom == undefined) return
+        leaveRoom.leave(client)
+        if (leaveRoom.clients == undefined || leaveRoom.clients.length <= 0) {
+            this.del(index, leaveRoom)
         }
+        serverSocketService.pushToClientLocal(client, Events.LEAVE_ROOM, new Response(true, leaveRoom.index,
+            "退出[" + leaveRoom.index + "]成功"))
     }
 
     createRoom(): Room | undefined {

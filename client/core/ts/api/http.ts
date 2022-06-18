@@ -1,18 +1,30 @@
 import {desktopService, screenService} from "../desktop";
+import {clientSocketService} from "../socket/client";
 
 /**
  * 启动截屏&推送任务
  */
-
 export function desktopInit() {
     desktopService.desktopInit()
 }
-export function suspend() {
+
+/**
+ * 暂停本地截屏&推送任务
+ */
+export function desktopSuspend() {
     screenService.suspend()
 }
-export function continued() {
+
+/**
+ * 恢复本地截屏&推送任务
+ */
+export function desktopContinued() {
     screenService.continued()
 }
-export function joinRoom(){
 
+/**
+ * 申请加入房间
+ */
+export function applyJoinRoom(roomId: string) {
+    clientSocketService.joinRoom(roomId)
 }

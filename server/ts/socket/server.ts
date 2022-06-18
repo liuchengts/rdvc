@@ -185,9 +185,17 @@ class ServerSocketServiceImpl implements ServerSocketService {
     }
 
     defaultSubscribe(clientSocket: ClientSocket) {
-        this.subscribe(clientSocket.client, Events.JOIN_ROOM, (data: Server) => {
+        this.subscribe(clientSocket.client, Events.JOIN_ROOM, (data: any) => {
             console.log("#socket server:", Events.JOIN_ROOM, "=>", data);
-            roomService.joinRoom(clientSocket)
+            processResponse<string>(data, (response: Response<string>) => {
+                roomService.joinRoom(clientSocket, response.data)
+            })
+        })
+        this.subscribe(clientSocket.client, Events.LEAVE_ROOM, (data: any) => {
+            console.log("#socket server:", Events.LEAVE_ROOM, "=>", data);
+            processResponse<string>(data, (response: Response<string>) => {
+                roomService.leaveRoom(clientSocket, response.data)
+            })
         })
         this.subscribe(clientSocket.client, Events.DISCONNECT, (data: any) => {
             console.log("#socket server:", Events.DISCONNECT);

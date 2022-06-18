@@ -79,6 +79,12 @@ interface DesktopService {
      */
     addRooms(roomId: string): void
 
+    /***
+     * 删除桌面图像要推到的房间号
+     * @param roomId
+     */
+    delRooms(roomId: string): void
+
     /**
      * 存储需要推的桌面图像（在这里进行图像压缩转码）
      * @param imgBuffer 原始图像buffer
@@ -136,6 +142,12 @@ class DesktopServiceImpl implements DesktopService {
             return
         }
         this.rooms.push(roomId)
+    }
+
+    delRooms(roomId: string) {
+        let index = this.rooms.indexOf(roomId)
+        if (index == -1) return
+        this.rooms = this.rooms.slice(index, 1)
     }
 
     async storage(imgBuffer: Buffer, quality?: number, width?: number, height?: number) {

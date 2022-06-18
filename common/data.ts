@@ -28,15 +28,17 @@ export class Screen {
 /**
  * 解析 Response
  * @param data 压缩加密后的数据
- * @param callback 处理函数
+ * @param successfulCallback 成功处理函数
+ * @param errorCallback 失败处理函数
  */
-export function processResponse<T>(data: Buffer, callback: Function) {
+export function processResponse<T>(data: Buffer, successfulCallback: Function, errorCallback?: Function) {
     gZipService.inflate(data, (result: string) => {
         let response = JSON.parse(result) as Response<T>
         if (response.successful) {
-            callback(response)
+            successfulCallback(response)
         } else {
             console.error("失败:", response)
+            if (errorCallback != null) errorCallback(response)
         }
     })
 }

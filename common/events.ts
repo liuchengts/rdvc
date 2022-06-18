@@ -6,4 +6,5 @@ export const enum Events {
     ERROR = "error",//异常 -
     INIT = "init",//初始化
     JOIN_ROOM = "joinRoom",//加入房间
+    LEAVE_ROOM = "leaveRoom",//退出房间
 }

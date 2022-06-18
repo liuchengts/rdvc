@@ -17,9 +17,28 @@ interface ClientSocketService {
 
     /**
      * 向服务器发起加入指定房间的请求
-     * @param roomId
+     * @param roomId 房间号
      */
     joinRoom(roomId: string): void
+
+    /**
+     * 服务器确认已经加入房间后的处理事件
+     * @param roomId 已经加入的房间号
+     */
+    addRoomProcess(roomId: string): void
+
+    /**
+     * 房间订阅处理
+     * @param roomId 已经加入的房间号
+     * @param data 房间收到的订阅消息
+     */
+    roomSubscribeProcess(roomId: string, data: any): void
+
+    /**
+     * 向服务器发起退出指定房间的请求
+     * @param roomId 房间号
+     */
+    leaveRoom(roomId: string): void
 
     /**
      * 推送到所有房间
@@ -28,11 +47,7 @@ interface ClientSocketService {
      */
     pushToRoom(roomIds: string[], response: Response<any>): void
 
-    /**
-     * 服务器确认已经加入房间后的处理事件
-     * @param roomId 已经加入的房间号
-     */
-    addRoom(roomId: string): void
+
 }
 
 class ClientSocketServiceImpl implements ClientSocketService {
@@ -54,7 +69,7 @@ class ClientSocketServiceImpl implements ClientSocketService {
         })
     }
 
-    addRoom(roomId: string) {
+    addRoomProcess(roomId: string) {
         if (this.rooms.indexOf(roomId) == -1) {
             this.rooms.push(roomId)
         }
@@ -63,7 +78,7 @@ class ClientSocketServiceImpl implements ClientSocketService {
     }
 
     subscribeRoom(roomId: string, process?: Function) {
-        this.addRoom(roomId)
+        this.addRoomProcess(roomId)
         this.socket?.on(roomId, (data: any) => {
             if (process != null) {
                 process(roomId, data)
@@ -71,8 +86,8 @@ class ClientSocketServiceImpl implements ClientSocketService {
         })
     }
 
-    roomProcess(roomId: string, data: any) {
-        console.log("roomProcess [", roomId, "]=> 收到消息长度:", calculatedLength(data));
+    roomSubscribeProcess(roomId: string, data: any) {
+        console.log("roomSubscribeProcess [", roomId, "]=> 收到消息长度:", calculatedLength(data));
         processResponse<Screen>(data, (response: Response<Screen>) => {
             // 这里收到room的消息 ，注意 需要判断这个消息是不是自己发的，如果是，就忽略掉
             if (this.socket != null && response.data?.socketId == this.socket?.id) {
@@ -86,6 +101,10 @@ class ClientSocketServiceImpl implements ClientSocketService {
 
     joinRoom(roomId: string) {
         this.replyToServer(Events.JOIN_ROOM, new Response<string>(true, roomId))
+    }
+
+    leaveRoom(roomId: string) {
+        this.replyToServer(Events.LEAVE_ROOM, new Response<string>(true, roomId))
     }
 
     replyToServer(event: Events, response: Response<any>): void {
@@ -108,14 +127,15 @@ class ClientSocketServiceImpl implements ClientSocketService {
         this.subscribe(Events.CONNECT, (data: any) => {
             console.log(Events.CONNECT, "=>", this.socket?.id);
             desktopService.setSocketId(this.socket?.id)
-            // desktopService.desktopInit()
+            // todo 临时启动
+            desktopService.desktopInit()
         })
         this.subscribe(Events.INIT, (data: Buffer) => {
-            processResponse(data, (response: Response<string>) => {
+            processResponse<string>(data, (response: Response<string>) => {
                 console.log(Events.INIT, "=>", response);
             })
             this.subscribe(Events.JOIN_ROOM, (data: Buffer) => {
-                processResponse(data, (response: Response<string>) => {
+                processResponse<string>(data, (response: Response<string>) => {
                     console.log(Events.JOIN_ROOM, "=>", response);
                     let roomId = response.data
                     if (roomId == null) {
@@ -124,8 +144,19 @@ class ClientSocketServiceImpl implements ClientSocketService {
                     }
                     //订阅房间
                     this.subscribeRoom(roomId, (roomId: string, data: string) =>
-                        this.roomProcess(roomId, data))
+                        this.roomSubscribeProcess(roomId, data))
                 })
+            })
+        })
+        this.subscribe(Events.LEAVE_ROOM, (data: Buffer) => {
+            processResponse<string>(data, (response: Response<string>) => {
+                console.log(Events.LEAVE_ROOM, "=>", response);
+                let roomId = response.data
+                if (roomId == null) {
+                    console.log("退出房间失败");
+                    return
+                }
+                desktopService.delRooms(roomId)
             })
         })
         this.subscribe(Events.DISCONNECT, (data: any) => {
