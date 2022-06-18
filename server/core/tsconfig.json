@@ -2,17 +2,18 @@
   "compilerOptions": {
     "module": "commonjs",
     "esModuleInterop": true,
+    "resolveJsonModule": true,
     "target": "es6",
-    "rootDir": "./",
+    "rootDir": "../../",
     "outDir": "./build",
     "strict": true,
     "allowJs": true
   },
   "include": [
-    "ts/**/*.ts",
-    "ts/**/*.tsx",
-    "../common/*.tsx",
-    "../common/*.ts"
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "../../common/*.tsx",
+    "../../common/*.ts"
   ],
   "exclude": [
     "node_modules"

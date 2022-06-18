@@ -1,10 +1,11 @@
 import {Server} from "socket.io";
 import * as http from "http";
 // @ts-ignore
-import {Events} from "../../../common/events";
-import {roomService} from "./rooms";
+import {Events} from "../../../../../common/events";
 // @ts-ignore
-import {Response, packageResponse, processResponse, Screen, calculatedLength} from "../../../common/data";
+import {Response, packageResponse, processResponse, Screen, calculatedLength} from "../../../../../common/data";
+import {roomService} from "./rooms";
+
 
 interface ClientSocketService {
     /**
@@ -120,7 +121,7 @@ class ServerSocketServiceImpl implements ServerSocketService {
                 credentials: true
             }
         });
-        this.socket.on(Events.CONNECTION, client => {
+        this.socket.on(Events.CONNECTION, (client:any) => {
             console.log("#socket server: welcome", Events.CONNECTION, "=>", client.id);
             let clientSocket = clientSocketService.add(client.id, client)
             this.pushToClientLocal(clientSocket, Events.INIT, new Response(true, null,
@@ -142,7 +143,7 @@ class ServerSocketServiceImpl implements ServerSocketService {
     }
 
     subscribe(client: Server, event: Events, process?: Function) {
-        client.on(event, data => {
+        client.on(event, (data:any) => {
             if (process != null) {
                 process(data)
             }

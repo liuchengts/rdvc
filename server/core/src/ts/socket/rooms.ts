@@ -1,6 +1,8 @@
 import {ClientSocket, clientSocketService, serverSocketService} from "./server";
-import {Events} from "../../../common/events";
-import {Response} from "../../../common/data";
+// @ts-ignore
+import {Events} from "../../../../../common/events";
+// @ts-ignore
+import {Response} from "../../../../../common/data";
 
 interface RoomService {
     /**

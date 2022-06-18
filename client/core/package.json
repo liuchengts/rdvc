@@ -1,10 +1,11 @@
 {
-  "name": "remote-desktop-server",
+  "name": "rdvc-client-core",
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dev": "set DEBUG=express:* & nodemon index.ts",
-    "prod": "tsc"
+    "dev": "set DEBUG=express:* & nodemon src/index.ts",
+    "build": "tsc",
+    "prod": "tsc & node ./build/client/core/src/index.js"
   },
   "dependencies": {
     "@squoosh/lib": "^0.4.0",
