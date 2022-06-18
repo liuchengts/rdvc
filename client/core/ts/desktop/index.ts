@@ -102,6 +102,8 @@ interface DesktopService {
      * @param socketId 服务器分配的 socketId
      */
     desktopInit(socketId: string): void
+
+    setSocketId(socketId?: string): void
 }
 
 class DesktopServiceImpl implements DesktopService {
@@ -183,16 +185,19 @@ class DesktopServiceImpl implements DesktopService {
         }
     }
 
-    desktopInit(socketId?: string) {
-        if (this.isTask) {
-            console.error("desktop 任务已启动")
-            return
-        }
+    setSocketId(socketId?: string) {
         if (socketId == null) {
             console.error("没有 socketId 不启动 desktop ")
             return
         }
         this.socketId = socketId
+    }
+
+    desktopInit() {
+        if (this.isTask) {
+            console.error("desktop 任务已启动")
+            return
+        }
         this.isTask = true
         screenService.startScreenshotTimer(((imgBuffer: Buffer): void => {
             this.storage(imgBuffer).then(() => {
@@ -204,7 +209,7 @@ class DesktopServiceImpl implements DesktopService {
 
 }
 
-const screenService = new ScreenService()
+export const screenService = new ScreenService()
 export const desktopService = new DesktopServiceImpl()
 
 

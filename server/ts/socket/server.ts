@@ -4,7 +4,7 @@ import * as http from "http";
 import {Events} from "../../../common/events";
 import {roomService} from "./rooms";
 // @ts-ignore
-import {Response, packageResponse, processResponse, Screen} from "../../../common/data";
+import {Response, packageResponse, processResponse, Screen, calculatedLength} from "../../../common/data";
 
 interface ClientSocketService {
     /**
@@ -104,6 +104,7 @@ interface ServerSocketService {
     defaultSubscribe(clientSocket: ClientSocket): void
 
     pushToClientLocal(clientSocket: ClientSocket, event: Events, response: Response<any>, isDeflate?: boolean): void
+
 }
 
 class ServerSocketServiceImpl implements ServerSocketService {
@@ -112,8 +113,7 @@ class ServerSocketServiceImpl implements ServerSocketService {
      */
     private socket?: Server;
 
-    init(port: number,
-         httpServer: http.Server) {
+    init(port: number, httpServer: http.Server) {
         this.socket = new Server(httpServer, {
             cors: {
                 origin: "http://localhost:" + port,
@@ -123,17 +123,10 @@ class ServerSocketServiceImpl implements ServerSocketService {
         this.socket.on(Events.CONNECTION, client => {
             console.log("#socket server: welcome", Events.CONNECTION, "=>", client.id);
             let clientSocket = clientSocketService.add(client.id, client)
-            let room = roomService.joinRoom(clientSocket)
-            if (room == undefined) {
-                console.error("desktop 加入房间失败")
-                this.pushToClientLocal(clientSocket, Events.INIT, new Response(false, null,
-                    "desktop 加入房间失败"))
-                return
-            }
-            this.pushToClientLocal(clientSocket, Events.INIT, new Response(true, room.index,
+            this.pushToClientLocal(clientSocket, Events.INIT, new Response(true, null,
                 "欢迎连接socket"))
             this.defaultSubscribe(clientSocket)
-            this.subscribeRoom(clientSocket, room.index)
+            roomService.joinRoom(clientSocket)
         });
         this.socket.listen(port)
         console.log("ServerSocket:", port)
@@ -141,7 +134,7 @@ class ServerSocketServiceImpl implements ServerSocketService {
 
     subscribeRoom(clientSocket: ClientSocket, roomId: string) {
         clientSocket.client.on(roomId, (data: Buffer) => {
-            console.log("收到房间消息[", roomId + "]长度:", data.length / 1024, "kb")
+            console.log("收到房间消息[", roomId + "]长度:", calculatedLength(data))
             processResponse<Screen>(data, (response: Response<Screen>) => {
                 console.log("收到房间消息[", roomId + "]=>", response.data)
             })
@@ -159,11 +152,11 @@ class ServerSocketServiceImpl implements ServerSocketService {
     pushToClientLocal(clientSocket: ClientSocket, event: Events, response: Response<any>, isDeflate?: boolean) {
         if (isDeflate != null && !isDeflate) {
             let msg = JSON.stringify(response)
-            console.log(event, "推送到[", clientSocket.id, "]数据长度:", msg.length)
+            console.log(event, "推送到[", clientSocket.id, "]数据长度:", calculatedLength(msg))
             clientSocket.client.compress(true).emit(event, msg);
         } else {
             packageResponse(response, (result: Buffer) => {
-                console.log(event, "推送到[", clientSocket.id, "]数据长度:", result.length)
+                console.log(event, "推送到[", clientSocket.id, "]数据长度:", calculatedLength(result))
                 clientSocket.client.compress(true).emit(event, result)
             })
         }
@@ -172,11 +165,11 @@ class ServerSocketServiceImpl implements ServerSocketService {
     pushToClient(socketId: string, event: Events, response: Response<any>, isDeflate?: boolean) {
         if (isDeflate != null && !isDeflate) {
             let msg = JSON.stringify(response)
-            console.log(event, "推送到[", socketId, "]数据长度:", msg.length)
+            console.log(event, "推送到[", socketId, "]数据长度:", calculatedLength(msg))
             this.socket?.compress(true).to(socketId).emit(event, msg);
         } else {
             packageResponse(response, (result: Buffer) => {
-                console.log(event, "推送到[", socketId, "]数据长度:", result.length)
+                console.log(event, "推送到[", socketId, "]数据长度:", calculatedLength(result))
                 this.socket?.compress(true).emit(event, result)
             })
         }
@@ -185,19 +178,24 @@ class ServerSocketServiceImpl implements ServerSocketService {
     pushToClients(socketIds: string[], event: Events, response: Response<any>) {
         packageResponse(response, (result: Buffer) => {
             socketIds.forEach(socketId => {
-                console.log(event, "推送到[", socketId, "]数据长度:", result.length)
+                console.log(event, "推送到[", socketId, "]数据长度:", calculatedLength(result))
                 this.socket?.compress(true).to(socketId).emit(event, result);
             })
         })
     }
 
     defaultSubscribe(clientSocket: ClientSocket) {
+        this.subscribe(clientSocket.client, Events.JOIN_ROOM, (data: Server) => {
+            console.log("#socket server:", Events.JOIN_ROOM, "=>", data);
+            roomService.joinRoom(clientSocket)
+        })
         this.subscribe(clientSocket.client, Events.DISCONNECT, (data: any) => {
             console.log("#socket server:", Events.DISCONNECT);
         })
         this.subscribe(clientSocket.client, Events.ERROR, (data: Server) => {
             console.log("#socket server:", Events.ERROR, "=>", data);
         })
+
     }
 }
 

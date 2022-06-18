@@ -52,3 +52,7 @@ export function packageResponse(response: Response<any>, callback: Function) {
         callback(result)
     })
 }
+
+export function calculatedLength(buffer: Buffer | string): string {
+    return buffer.length / 1024 + " kb"
+}

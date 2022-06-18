@@ -1,4 +1,6 @@
-import {ClientSocket, clientSocketService} from "./server";
+import {ClientSocket, clientSocketService, serverSocketService} from "./server";
+import {Events} from "../../../common/events";
+import {Response} from "../../../common/data";
 
 interface RoomService {
     /**
@@ -88,8 +90,17 @@ class RoomServiceImpl implements RoomService {
         } else {
             room = this.createRoom()
         }
-        if (room == undefined) return undefined;
+        if (room == undefined) {
+            console.error("desktop 加入房间失败")
+            serverSocketService.pushToClientLocal(client, Events.JOIN_ROOM, new Response(false, null,
+                "desktop 加入房间失败"))
+            return undefined;
+        }
+        //todo  这里可能需要加入room是否允许加入的权限判断
         room.join(client)
+        serverSocketService.subscribeRoom(client, room.index)
+        serverSocketService.pushToClientLocal(client, Events.JOIN_ROOM, new Response(true, room.index,
+            "欢迎加入[" + room.index + "]room"))
         return room
     }
 

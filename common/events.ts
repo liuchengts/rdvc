@@ -5,4 +5,5 @@ export const enum Events {
     RECONNECT = "reconnect",//客户端重新连接 -
     ERROR = "error",//异常 -
     INIT = "init",//初始化
+    JOIN_ROOM = "joinRoom",//加入房间
 }
