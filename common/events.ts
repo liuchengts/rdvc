@@ -7,4 +7,5 @@ export const enum Events {
     INIT = "init",//初始化
     JOIN_ROOM = "joinRoom",//加入房间
     LEAVE_ROOM = "leaveRoom",//退出房间
+    SCREEN = "screen",//屏幕推图片流
 }

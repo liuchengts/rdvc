@@ -11,6 +11,7 @@ import {
     RoomDetails,
     Screen
 } from "../../../../common/data";
+import {screenData} from "../api/listens";
 
 interface ClientSocketService {
 
@@ -149,6 +150,12 @@ class ClientSocketServiceImpl implements ClientSocketService {
                 } else {
                     console.log("其他成员主动退出房间 socketId:", roomDetails.leave, " roomId:", roomDetails.roomId)
                 }
+            })
+        })
+        this.subscribe(Events.SCREEN, (data: Buffer) => {
+            processResponse<Screen>(data, (response: Response<Screen>) => {
+                if (response.data == null) return
+                screenData(response.data.imgBuffer)
             })
         })
         this.subscribe(Events.DISCONNECT, (data: any) => {
