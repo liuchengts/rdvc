@@ -23,10 +23,11 @@ class ScreenService {
      */
     private isSuspend: boolean = false;
     private indexSuspend: number = 0;
+
     /**
      * 截取屏幕
      */
-    createScreenshot = (): Promise<Buffer> => {
+    createScreenshot(): Promise<Buffer> {
         return screenshotDesktop({format: "png"})
             .then(img => {
                 return img;
@@ -35,30 +36,30 @@ class ScreenService {
                 return err;
             })
     }
+
     /**
      * 定时器触发截取屏幕
      * @param callback 回调函数处理截取的图片buffer
      */
-    startScreenshotTimer = (callback: Function): {} => {
-        return setInterval((): void => {
-            let time = new Date();
-            if (this.isSuspend) {
-                if (this.indexSuspend > 0) return
-                console.log("截屏暂停[", this.indexSuspend, "]", time)
-                this.indexSuspend++
-            } else {
-                console.log("我开始截屏了", time)
-                this.createScreenshot().then((img): void => {
-                    callback(img);
-                })
-            }
-        }, SCREENSHOT_INTERVAL)
+    startScreenshotTimer(callback: Function) {
+        let time = new Date();
+        if (this.isSuspend) {
+            if (this.indexSuspend > 0) return
+            console.log("截屏暂停[", this.indexSuspend, "]", time)
+            this.indexSuspend++
+        } else {
+            console.log("我开始截屏了", time)
+            this.createScreenshot().then((img): void => {
+                callback(img);
+            })
+        }
     }
 
     /**
      * 暂停截取
      */
     suspend() {
+        if (this.isSuspend) return
         this.isSuspend = true;
         console.log("截屏任务暂停")
     }
@@ -67,9 +68,11 @@ class ScreenService {
      * 恢复截取
      */
     continued() {
+        if (!this.isSuspend) return
         this.isSuspend = false;
         console.log("截屏任务继续开始")
     }
+
 }
 
 interface DesktopService {
@@ -151,16 +154,6 @@ class DesktopServiceImpl implements DesktopService {
     }
 
     async storage(imgBuffer: Buffer, quality?: number, width?: number, height?: number) {
-        if (this.socketId == undefined) {
-            console.warn("没有 socketId")
-            screenService.suspend()
-            return
-        }
-        if (this.desktops.length >= this.desktopsMax) {
-            console.warn("desktops超过上限,放弃本次增加:", new Date())
-            screenService.suspend()
-            return
-        }
         if (quality == null) quality = this.quality
         console.log("压缩前的图片大小:", imgBuffer.length / 1024, "kb")
         //将图片编码压缩 imgStr
@@ -168,7 +161,7 @@ class DesktopServiceImpl implements DesktopService {
         let buffer = Buffer.from(promise.binary.buffer)
         console.log("压缩后的图片大小:", buffer.length / 1024, "kb")
         let extension = promise.extension
-        let screen = new Screen(this.socketId, buffer, quality, extension, width, height)
+        let screen = new Screen(this.socketId!, buffer, quality, extension, width, height)
         this.desktops.push(new DesktopScreen(this.rooms, screen, new Date()))
         this.desktops.forEach(d => {
             console.log("desktops中的元素：", d.time)
@@ -211,12 +204,30 @@ class DesktopServiceImpl implements DesktopService {
             return
         }
         this.isTask = true
-        screenService.startScreenshotTimer(((imgBuffer: Buffer): void => {
-            this.storage(imgBuffer).then(() => {
-                console.log("压缩存储成功")
-                this.push()
-            })
-        }))
+        setInterval((): void => {
+            if (this.socketId == undefined) {
+                console.warn("没有 socketId")
+                screenService.suspend()
+                return
+            }
+            if (this.rooms.length <= 0) {
+                console.warn("没有要接收的rooms")
+                screenService.suspend()
+                return
+            }
+            if (this.desktops.length >= this.desktopsMax) {
+                console.warn("desktops超过上限,放弃本次增加:", new Date())
+                screenService.suspend()
+                return
+            }
+            screenService.startScreenshotTimer(((imgBuffer: Buffer): void => {
+                this.storage(imgBuffer).then(() => {
+                    console.log("压缩存储成功")
+                    this.push()
+                })
+            }))
+        }, SCREENSHOT_INTERVAL)
+
     }
 
 }

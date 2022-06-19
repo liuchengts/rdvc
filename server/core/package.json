@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "set DEBUG=express:* & nodemon src/index.ts",
     "build": "tsc",
-    "prod": "tsc & node ./build/server/core/src/index.js"
+    "prod": "tsc & node ./build/server/core/src/index.js",
+    "pkg": "tsc & pkg -t  node16-macos-x64 ./build/server/core/src/index.js --output=rdvc-server-core"
   },
   "dependencies": {
     "express": "^4.16.1",

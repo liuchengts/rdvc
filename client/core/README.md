@@ -12,8 +12,7 @@ https://juejin.cn/post/6921870622565875726
 
 lsof -i:8000
 
-npm install --save @types/imagemin-webp
-npm install --save @types/imagemin
+
 
 
     "imagemin": "^8.0.0",
@@ -21,3 +20,5 @@ npm install --save @types/imagemin
 
     "@types/imagemin": "^8.0.0",
     "@types/imagemin-webp": "^7.0.0",
+
+npm install -g express screenshot-desktop socket.io-client @squoosh/lib

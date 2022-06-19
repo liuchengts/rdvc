@@ -2,10 +2,12 @@
   "name": "rdvc-client-core",
   "version": "0.0.0",
   "private": true,
+  "bin": "./bin/www",
   "scripts": {
     "dev": "set DEBUG=express:* & nodemon src/index.ts",
     "build": "tsc",
-    "prod": "tsc & node ./build/client/core/src/index.js"
+    "prod": "tsc & node ./build/client/core/src/index.js",
+    "pkg": "pkg -t  node16-macos-x64 ./build/client/core/src/index.js --output=rdvc-client-core"
   },
   "dependencies": {
     "@squoosh/lib": "^0.4.0",

@@ -26,6 +26,18 @@ export class Screen {
 }
 
 /**
+ * 房间信息传输模型
+ */
+export class RoomDetails {
+    constructor(
+        public roomId: string,
+        public attribution: string,
+        public socketIds: string[],
+        public leave?: string) {
+    }
+}
+
+/**
  * 解析 Response
  * @param data 压缩加密后的数据
  * @param successfulCallback 成功处理函数

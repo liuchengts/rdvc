@@ -3,7 +3,14 @@ import {io, Socket} from "socket.io-client";
 import {Events} from "../../../../common/events";
 import {desktopService} from "../desktop";
 // @ts-ignore
-import {calculatedLength, packageResponse, processResponse, Response, Screen} from "../../../../common/data";
+import {
+    calculatedLength,
+    packageResponse,
+    processResponse,
+    Response,
+    RoomDetails,
+    Screen
+} from "../../../../common/data";
 
 interface ClientSocketService {
 
@@ -17,22 +24,15 @@ interface ClientSocketService {
 
     /**
      * 向服务器发起加入指定房间的请求
-     * @param roomId 房间号
+     * @param roomId 房间号 为空表示由服务器分配
      */
-    joinRoom(roomId: string): void
+    joinRoom(roomId?: string): void
 
     /**
      * 服务器确认已经加入房间后的处理事件
-     * @param roomId 已经加入的房间号
+     * @param roomDetails 已经加入的房间
      */
-    addRoomProcess(roomId: string): void
-
-    /**
-     * 房间订阅处理
-     * @param roomId 已经加入的房间号
-     * @param data 房间收到的订阅消息
-     */
-    roomSubscribeProcess(roomId: string, data: any): void
+    addRoomProcess(roomDetails: RoomDetails): void
 
     /**
      * 向服务器发起退出指定房间的请求
@@ -54,11 +54,12 @@ class ClientSocketServiceImpl implements ClientSocketService {
 
     private socket?: Socket
 
-    private rooms = new Array<string>()
+    private roomAttribution = new Map<string, RoomDetails>()
 
     init(connection: string) {
         this.socket = io(connection)
         this.defaultSubscribe()
+        console.log("client core clientSocket start");
     }
 
     subscribe(event: Events, process?: Function) {
@@ -69,37 +70,22 @@ class ClientSocketServiceImpl implements ClientSocketService {
         })
     }
 
-    addRoomProcess(roomId: string) {
-        if (this.rooms.indexOf(roomId) == -1) {
-            this.rooms.push(roomId)
+    delRoomProcess(roomDetails: RoomDetails) {
+        if (!this.roomAttribution.has(roomDetails.roomId)) return
+        desktopService.delRooms(roomDetails.roomId)
+        this.roomAttribution.delete(roomDetails.roomId)
+    }
+
+    addRoomProcess(roomDetails: RoomDetails) {
+        let details = this.roomAttribution.get(roomDetails.roomId)
+        if (details == null) {
+            this.roomAttribution.set(roomDetails.roomId, roomDetails)
+            //将桌面添加房间订阅
+            desktopService.addRooms(roomDetails.roomId)
         }
-        //将桌面添加房间订阅
-        desktopService.addRooms(roomId)
     }
 
-    subscribeRoom(roomId: string, process?: Function) {
-        this.addRoomProcess(roomId)
-        this.socket?.on(roomId, (data: any) => {
-            if (process != null) {
-                process(roomId, data)
-            }
-        })
-    }
-
-    roomSubscribeProcess(roomId: string, data: any) {
-        console.log("roomSubscribeProcess [", roomId, "]=> 收到消息长度:", calculatedLength(data));
-        processResponse<Screen>(data, (response: Response<Screen>) => {
-            // 这里收到room的消息 ，注意 需要判断这个消息是不是自己发的，如果是，就忽略掉
-            if (this.socket != null && response.data?.socketId == this.socket?.id) {
-                console.log("是自己发的消息，忽略掉")
-                return
-            } else {
-                //todo   当前客户端可能在观看其他人屏幕，需要将此data进行下一步处理
-            }
-        })
-    }
-
-    joinRoom(roomId: string) {
+    joinRoom(roomId?: string) {
         this.replyToServer(Events.JOIN_ROOM, new Response<string>(true, roomId))
     }
 
@@ -117,7 +103,6 @@ class ClientSocketServiceImpl implements ClientSocketService {
         packageResponse(response, (result: Buffer) => {
             roomIds.forEach(roomId => {
                 console.log("向房间[", roomId, "]发消息,长度:", calculatedLength(result))
-                // this.socket?.emit(roomId, result)
                 this.socket?.compress(true).emit(roomId, result)
             })
         })
@@ -129,34 +114,41 @@ class ClientSocketServiceImpl implements ClientSocketService {
             desktopService.setSocketId(this.socket?.id)
             // todo 临时启动
             desktopService.desktopInit()
+            // this.joinRoom("66611000")
         })
         this.subscribe(Events.INIT, (data: Buffer) => {
             processResponse<string>(data, (response: Response<string>) => {
                 console.log(Events.INIT, "=>", response);
             })
             this.subscribe(Events.JOIN_ROOM, (data: Buffer) => {
-                processResponse<string>(data, (response: Response<string>) => {
+                processResponse<RoomDetails>(data, (response: Response<RoomDetails>) => {
                     console.log(Events.JOIN_ROOM, "=>", response);
-                    let roomId = response.data
-                    if (roomId == null) {
+                    let roomDetails = response.data
+                    if (roomDetails == null) {
                         console.log("加入房间失败");
                         return
                     }
-                    //订阅房间
-                    this.subscribeRoom(roomId, (roomId: string, data: string) =>
-                        this.roomSubscribeProcess(roomId, data))
+                    this.addRoomProcess(roomDetails)
+                    // 临时加入 测试leaveRoom
+                    this.leaveRoom(roomDetails.roomId)
+                    console.log("向服务器发送退出房间")
                 })
             })
         })
         this.subscribe(Events.LEAVE_ROOM, (data: Buffer) => {
-            processResponse<string>(data, (response: Response<string>) => {
+            processResponse<RoomDetails>(data, (response: Response<RoomDetails>) => {
                 console.log(Events.LEAVE_ROOM, "=>", response);
-                let roomId = response.data
-                if (roomId == null) {
+                let roomDetails = response.data
+                if (roomDetails == null) {
                     console.log("退出房间失败");
                     return
                 }
-                desktopService.delRooms(roomId)
+                if (roomDetails.attribution == roomDetails.leave) {
+                    console.log("房间拥有者主动退出房间 socketId:", roomDetails.leave, " roomId:", roomDetails.roomId)
+                    this.delRoomProcess(roomDetails)
+                } else {
+                    console.log("其他成员主动退出房间 socketId:", roomDetails.leave, " roomId:", roomDetails.roomId)
+                }
             })
         })
         this.subscribe(Events.DISCONNECT, (data: any) => {

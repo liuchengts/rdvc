@@ -3,67 +3,14 @@ import * as http from "http";
 // @ts-ignore
 import {Events} from "../../../../../common/events";
 // @ts-ignore
-import {Response, packageResponse, processResponse, Screen, calculatedLength} from "../../../../../common/data";
-import {roomService} from "./rooms";
-
-
-interface ClientSocketService {
-    /**
-     * 删除一个存储
-     * @param id Socket分配的clientId
-     */
-    del(id: string): void
-
-    /**
-     * 将一个clientSocket加入存储
-     * @param id Socket分配的clientId
-     * @param client Socket client对象
-     */
-    add(id: string, client: Server): ClientSocket
-
-    /**
-     * 获取一个存储
-     * @param id Socket分配的clientId
-     */
-    get(id: string): ClientSocket
-}
-
-class ClientSocketServiceImpl implements ClientSocketService {
-
-    /**
-     * 客户端 Socket 存储
-     */
-    private clientSockets = new Map();
-
-    add(id: string, client: Server): ClientSocket {
-        if (this.clientSockets.has(id)) {
-            console.warn("已存在 id:", id)
-            return this.get(id)
-        }
-        let clientSocket = new ClientSocket(client, id)
-        this.clientSockets.set(id, clientSocket)
-        return clientSocket
-    }
-
-    del(id: string) {
-        if (!this.clientSockets.has(id)) {
-            console.warn("不存在 id:", id)
-            return
-        }
-        this.clientSockets.delete(id)
-    }
-
-    get(id: string): ClientSocket {
-        return this.clientSockets.get(id)
-    }
-}
-
-
-export class ClientSocket {
-    constructor(public client: any,
-                public id: string) {
-    }
-}
+import {
+    calculatedLength,
+    packageResponse,
+    processResponse,
+    Response,
+    RoomDetails,
+    Screen
+} from "../../../../../common/data";
 
 interface ServerSocketService {
     /**
@@ -100,12 +47,39 @@ interface ServerSocketService {
 
     /**
      * 客户端默认的订阅事件
-     * @param clientSocket 客户端
+     * @param client 客户端
      */
-    defaultSubscribe(clientSocket: ClientSocket): void
+    defaultSubscribe(client: any): void
 
-    pushToClientLocal(clientSocket: ClientSocket, event: Events, response: Response<any>, isDeflate?: boolean): void
+    pushToClientLocal(client: any, event: Events, response: Response<any>, isDeflate?: boolean): void
 
+    // 系统操作api
+    /**
+     * 将socket客户端加入某个房间
+     * @param socketId  socket客户端
+     * @param roomId  房间号
+     */
+    joinRoom(socketId: string, roomId: string): void
+
+    /**
+     * 将socket客户端移除某个房间
+     * @param socketId  socket客户端
+     * @param roomId  房间号
+     */
+    leaveRoom(socketId: string, roomId: string): void
+
+    /**
+     * 强制让某个房间下的所有socket客户端关闭连接
+     * @param roomId  房间号
+     */
+    disconnectRoom(roomId: string): void
+
+    /**
+     * 获取某个房间下的socket客户端
+     * @param roomId 房间号
+     * @param callback 回调函数-在获得当前房间下所有socket客户端后执行
+     */
+    getRoomSockets(roomId: string, callback: Function): void
 }
 
 class ServerSocketServiceImpl implements ServerSocketService {
@@ -113,6 +87,14 @@ class ServerSocketServiceImpl implements ServerSocketService {
      * 服务端 socket
      */
     private socket?: Server;
+    /**
+     * 默认加入的注册房间
+     */
+    private registerRoom = "REGISTER_ROOM"
+    /**
+     * 房间的归属者
+     */
+    private roomAttribution = new Map<string, RoomDetails>()
 
     init(port: number, httpServer: http.Server) {
         this.socket = new Server(httpServer, {
@@ -121,44 +103,77 @@ class ServerSocketServiceImpl implements ServerSocketService {
                 credentials: true
             }
         });
-        this.socket.on(Events.CONNECTION, (client:any) => {
+        this.socket.on(Events.CONNECTION, (client: any) => {
             console.log("#socket server: welcome", Events.CONNECTION, "=>", client.id);
-            let clientSocket = clientSocketService.add(client.id, client)
-            this.pushToClientLocal(clientSocket, Events.INIT, new Response(true, null,
+            this.joinRoom(client.id, this.registerRoom)
+            this.pushToClientLocal(client, Events.INIT, new Response(true, null,
                 "欢迎连接socket"))
-            this.defaultSubscribe(clientSocket)
-            roomService.joinRoom(clientSocket)
+            this.defaultSubscribe(client)
         });
         this.socket.listen(port)
         console.log("ServerSocket:", port)
     }
 
-    subscribeRoom(clientSocket: ClientSocket, roomId: string) {
-        clientSocket.client.on(roomId, (data: Buffer) => {
-            console.log("收到房间消息[", roomId + "]长度:", calculatedLength(data))
-            processResponse<Screen>(data, (response: Response<Screen>) => {
-                console.log("收到房间消息[", roomId + "]=>", response.data)
-            })
-        })
+    createAndJoinRoom(socketId: string, roomId: string) {
+        if (roomId == this.registerRoom) return
+        let roomDetails = this.roomAttribution.get(roomId)
+        if (roomDetails == null) {
+            //不存在房间，注册为房间拥有者
+            roomDetails = new RoomDetails(roomId, socketId, [socketId])
+        } else {
+            roomDetails.socketIds.push(socketId)
+        }
+        this.roomAttribution.set(roomId, roomDetails)
+        this.joinRoom(socketId, roomId)
+        this.pushToClient(socketId, Events.JOIN_ROOM, new Response<RoomDetails>(true, roomDetails, "new room id"))
+    }
+
+    joinRoom(socketId: string, roomId: string) {
+        this.socket?.in(socketId).socketsJoin(roomId)
+    }
+
+    leaveRoom(socketId: string, roomId: string) {
+        let roomDetails = this.roomAttribution.get(roomId)
+        if (roomDetails != null) {
+            roomDetails.leave = socketId
+            if (roomDetails.attribution == socketId) {
+                console.log("房间拥有者主动退出房间 socketId:", socketId, " roomId:", roomId)
+                this.pushToClient(socketId, Events.LEAVE_ROOM, new Response<RoomDetails>(true, roomDetails))
+                //清除房间
+                this.roomAttribution.delete(roomId)
+            } else {
+                this.pushToClient(roomId, Events.LEAVE_ROOM, new Response<RoomDetails>(true, roomDetails))
+            }
+        }
+        this.socket?.in(socketId).socketsLeave(roomId)
+    }
+
+    disconnectRoom(roomId: string) {
+        this.socket?.in(roomId).disconnectSockets(true)
+    }
+
+    async getRoomSockets(roomId: string, callback: Function) {
+        const sockets = await this.socket?.in(roomId).fetchSockets();
+        callback(sockets)
     }
 
     subscribe(client: Server, event: Events, process?: Function) {
-        client.on(event, (data:any) => {
+        client.on(event, (data: any) => {
             if (process != null) {
                 process(data)
             }
         })
     }
 
-    pushToClientLocal(clientSocket: ClientSocket, event: Events, response: Response<any>, isDeflate?: boolean) {
+    pushToClientLocal(client: any, event: Events, response: Response<any>, isDeflate?: boolean) {
         if (isDeflate != null && !isDeflate) {
             let msg = JSON.stringify(response)
-            console.log(event, "推送到[", clientSocket.id, "]数据长度:", calculatedLength(msg))
-            clientSocket.client.compress(true).emit(event, msg);
+            console.log(event, "推送到[", client.id, "]数据长度:", calculatedLength(msg))
+            client.compress(true).emit(event, msg);
         } else {
             packageResponse(response, (result: Buffer) => {
-                console.log(event, "推送到[", clientSocket.id, "]数据长度:", calculatedLength(result))
-                clientSocket.client.compress(true).emit(event, result)
+                console.log(event, "推送到[", client.id, "]数据长度:", calculatedLength(result))
+                client.compress(true).emit(event, result)
             })
         }
     }
@@ -171,7 +186,7 @@ class ServerSocketServiceImpl implements ServerSocketService {
         } else {
             packageResponse(response, (result: Buffer) => {
                 console.log(event, "推送到[", socketId, "]数据长度:", calculatedLength(result))
-                this.socket?.compress(true).emit(event, result)
+                this.socket?.compress(true).in(socketId).emit(event, result)
             })
         }
     }
@@ -185,28 +200,34 @@ class ServerSocketServiceImpl implements ServerSocketService {
         })
     }
 
-    defaultSubscribe(clientSocket: ClientSocket) {
-        this.subscribe(clientSocket.client, Events.JOIN_ROOM, (data: any) => {
-            console.log("#socket server:", Events.JOIN_ROOM, "=>", data);
+    defaultSubscribe(client: any) {
+        this.subscribe(client, Events.JOIN_ROOM, (data: any) => {
+            console.log("#socket server:", Events.JOIN_ROOM, "=>", calculatedLength(data));
             processResponse<string>(data, (response: Response<string>) => {
-                roomService.joinRoom(clientSocket, response.data)
+                let roomId = ""
+                if (response.data == null) {
+                    roomId = "" + Math.floor(Math.random() * (9999 - 1000)) + 1000
+                } else {
+                    roomId = response.data
+                }
+                this.createAndJoinRoom(client.id, roomId)
             })
         })
-        this.subscribe(clientSocket.client, Events.LEAVE_ROOM, (data: any) => {
-            console.log("#socket server:", Events.LEAVE_ROOM, "=>", data);
+        this.subscribe(client, Events.LEAVE_ROOM, (data: any) => {
+            console.log("#socket server:", Events.LEAVE_ROOM, "=>", calculatedLength(data));
             processResponse<string>(data, (response: Response<string>) => {
-                roomService.leaveRoom(clientSocket, response.data)
+                if (response.data == null) return
+                this.leaveRoom(client.id, response.data)
             })
         })
-        this.subscribe(clientSocket.client, Events.DISCONNECT, (data: any) => {
+        this.subscribe(client, Events.DISCONNECT, (data: any) => {
             console.log("#socket server:", Events.DISCONNECT);
         })
-        this.subscribe(clientSocket.client, Events.ERROR, (data: Server) => {
+        this.subscribe(client, Events.ERROR, (data: Server) => {
             console.log("#socket server:", Events.ERROR, "=>", data);
         })
 
     }
 }
 
-export const clientSocketService = new ClientSocketServiceImpl()
 export const serverSocketService = new ServerSocketServiceImpl()
