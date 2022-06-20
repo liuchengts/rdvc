@@ -154,8 +154,9 @@ class ClientSocketServiceImpl implements ClientSocketService {
         })
         this.subscribe(Events.SCREEN, (data: Buffer) => {
             processResponse<Screen>(data, (response: Response<Screen>) => {
-                if (response.data == null) return
-                screenData(response.data.imgBuffer)
+                console.log(Events.SCREEN, "=>", response);
+                // if (response.data == null) return
+                // screenData(response.data.imgBuffer)
             })
         })
         this.subscribe(Events.DISCONNECT, (data: any) => {

@@ -7,7 +7,7 @@
     "dev": "set DEBUG=express:* & nodemon src/index.ts",
     "build": "tsc",
     "prod": "tsc & node ./build/client/core/src/index.js",
-    "pkg": "pkg -t  node16-macos-x64 ./build/client/core/src/index.js --output=rdvc-client-core"
+    "pkg": "pkg -t  node16-macos-x64,node16-win-x64,node12-linux ./build/client/core/src/index.js --output=bin/rdvc-client-core"
   },
   "dependencies": {
     "express-handlebars": "^6.0.6",

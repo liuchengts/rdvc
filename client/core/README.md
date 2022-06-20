@@ -12,7 +12,7 @@ https://juejin.cn/post/6921870622565875726
 
 lsof -i:8000
 
-
+-t  node16-macos-x64
 
 
     "imagemin": "^8.0.0",
