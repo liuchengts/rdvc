@@ -58,6 +58,12 @@ class ClientSocketServiceImpl implements ClientSocketService {
     private roomAttribution = new Map<string, RoomDetails>()
     private isReconnect = false
 
+    test() {
+        // todo 临时启动
+        // desktopService.desktopInit()
+        // this.joinRoom("548")
+    }
+
     init(connection: string) {
         this.socket = io(connection)
         this.defaultSubscribe()
@@ -141,15 +147,14 @@ class ClientSocketServiceImpl implements ClientSocketService {
                 return
             }
             this.oldSocketId = this.socket?.id
-            // todo 临时启动
-            desktopService.desktopInit()
             this.joinRoom()
-            // this.joinRoom("548")
             this.socket?.io.on(Events.RECONNECT, (data: any) => {
                 console.log("#socket client:", Events.RECONNECT, "=>", data);
                 this.isReconnect = true
                 screenService.continued()
             })
+            //todo 这里是测试内容
+            this.test()
         })
         this.subscribe(Events.INIT, (data: Buffer) => {
             processResponse<string>(data, (response: Response<string>) => {
