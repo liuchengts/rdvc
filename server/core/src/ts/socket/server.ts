@@ -6,7 +6,7 @@ import {Events} from "../../../../../common/events";
 import {
     calculatedLength,
     packageResponse,
-    processResponse,
+    processResponse, ReconnectDetails,
     Response,
     RoomDetails,
     Screen
@@ -114,26 +114,23 @@ class ServerSocketServiceImpl implements ServerSocketService {
         this.socket.listen(port)
         console.log("ServerSocket:", port)
     }
-    recoveryRoom() {
-        this.isReconnect = false
-        // 重连之后保留了room，但是id被更新了
-        const socketId = this.socket?.id!
-        desktopService.setSocketId(socketId)
+
+    recoveryRoom(reconnectDetails: ReconnectDetails) {
         this.roomAttribution.forEach((value, key) => {
-            if (value.attribution == this.oldSocketId) {
-                value.attribution = socketId
+            if (value.attribution == reconnectDetails.oldSocketId) {
+                value.attribution = reconnectDetails.newSocketId
             }
-            if (value.leave == this.oldSocketId) {
-                value.leave = socketId
+            if (value.leave == reconnectDetails.oldSocketId) {
+                value.leave = reconnectDetails.newSocketId
             }
             value.socketIds.forEach(id => {
-                if (id == this.oldSocketId) {
-                    return socketId
+                if (id == reconnectDetails.oldSocketId) {
+                    return reconnectDetails.newSocketId
                 }
             })
         });
-        this.oldSocketId = socketId
     }
+
     createAndJoinRoom(socketId: string, roomId: string) {
         if (roomId == this.registerRoom) return
         let roomDetails = this.roomAttribution.get(roomId)
@@ -226,7 +223,7 @@ class ServerSocketServiceImpl implements ServerSocketService {
             processResponse<string>(data, (response: Response<string>) => {
                 let roomId = ""
                 if (response.data == null) {
-                    roomId = "" + Math.floor(Math.random() * (9999 - 1000))
+                    roomId = "" + Math.floor(Math.random() * (9999))
                 } else {
                     roomId = response.data
                 }
@@ -247,6 +244,14 @@ class ServerSocketServiceImpl implements ServerSocketService {
                 if (response.data == null) return
             })
         })
+        this.subscribe(client, Events.RECONNECT_UPDATE, (data: any) => {
+            console.log("#socket server:", Events.RECONNECT_UPDATE, "=>", calculatedLength(data));
+            processResponse<ReconnectDetails>(data, (response: Response<ReconnectDetails>) => {
+                if (response.data == null) return
+                this.recoveryRoom(response.data)
+            })
+        })
+
         this.subscribe(client, Events.DISCONNECT, (data: any) => {
             console.log("#socket server:", Events.DISCONNECT);
         })

@@ -6,7 +6,7 @@ import {desktopService, screenService} from "../desktop/screenshot";
 import {
     calculatedLength,
     packageResponse,
-    processResponse,
+    processResponse, ReconnectDetails,
     Response,
     RoomDetails,
     Screen
@@ -114,7 +114,8 @@ class ClientSocketServiceImpl implements ClientSocketService {
         this.isReconnect = false
         // 重连之后保留了room，但是id被更新了
         const socketId = this.socket?.id!
-        desktopService.setSocketId(socketId)
+        let reconnectDetails = new ReconnectDetails(this.oldSocketId!, socketId)
+        desktopService.setSocketId(reconnectDetails.newSocketId)
         this.roomAttribution.forEach((value, key) => {
             if (value.attribution == this.oldSocketId) {
                 value.attribution = socketId
@@ -129,8 +130,7 @@ class ClientSocketServiceImpl implements ClientSocketService {
             })
         });
         this.oldSocketId = socketId
-        //todo  发送事件给服务端
-        this.replyToServer(Events.RECONNECT_UPDATE)
+        this.replyToServer(Events.RECONNECT_UPDATE, new Response<ReconnectDetails>(true, reconnectDetails))
     }
 
     defaultSubscribe() {
