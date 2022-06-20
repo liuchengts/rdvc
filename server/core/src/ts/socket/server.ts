@@ -116,6 +116,10 @@ class ServerSocketServiceImpl implements ServerSocketService {
     }
 
     recoveryRoom(reconnectDetails: ReconnectDetails) {
+        console.log("recoveryRoom 更改前================")
+        this.roomAttribution.forEach((value, key) => {
+            console.log("===== room:", key, " value:", value)
+        });
         this.roomAttribution.forEach((value, key) => {
             if (value.attribution == reconnectDetails.oldSocketId) {
                 value.attribution = reconnectDetails.newSocketId
@@ -123,11 +127,14 @@ class ServerSocketServiceImpl implements ServerSocketService {
             if (value.leave == reconnectDetails.oldSocketId) {
                 value.leave = reconnectDetails.newSocketId
             }
-            value.socketIds.forEach(id => {
-                if (id == reconnectDetails.oldSocketId) {
-                    return reconnectDetails.newSocketId
-                }
-            })
+            let index = value.socketIds.indexOf(reconnectDetails.oldSocketId!)
+            if (index == -1) return
+            value.socketIds.splice(index, 1)
+            value.socketIds.push(reconnectDetails.newSocketId)
+        });
+        console.log("recoveryRoom 更改后================")
+        this.roomAttribution.forEach((value, key) => {
+            console.log("===== room:", key, " value:", value)
         });
     }
 

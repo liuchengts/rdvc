@@ -60,7 +60,7 @@ class ClientSocketServiceImpl implements ClientSocketService {
 
     test() {
         // todo 临时启动
-        // desktopService.desktopInit()
+        desktopService.desktopInit()
         // this.joinRoom("548")
     }
 
@@ -102,6 +102,7 @@ class ClientSocketServiceImpl implements ClientSocketService {
     }
 
     replyToServer(event: Events, response: Response<any>): void {
+        console.log("向服务器发消息[", event, "]发消息:", response)
         packageResponse(response, (result: Buffer) => {
             this.socket?.compress(true).emit(event, result)
         })
@@ -117,6 +118,10 @@ class ClientSocketServiceImpl implements ClientSocketService {
     }
 
     recoveryRoom() {
+        console.log("recoveryRoom 更改前================")
+        this.roomAttribution.forEach((value, key) => {
+            console.log("===== room:", key, " value:", value)
+        });
         this.isReconnect = false
         // 重连之后保留了room，但是id被更新了
         const socketId = this.socket?.id!
@@ -129,19 +134,22 @@ class ClientSocketServiceImpl implements ClientSocketService {
             if (value.leave == this.oldSocketId) {
                 value.leave = socketId
             }
-            value.socketIds.forEach(id => {
-                if (id == this.oldSocketId) {
-                    return socketId
-                }
-            })
+            let index = value.socketIds.indexOf(this.oldSocketId!)
+            if (index == -1) return
+            value.socketIds.splice(index, 1)
+            value.socketIds.push(socketId)
         });
         this.oldSocketId = socketId
         this.replyToServer(Events.RECONNECT_UPDATE, new Response<ReconnectDetails>(true, reconnectDetails))
+        console.log("recoveryRoom 更改后================")
+        this.roomAttribution.forEach((value, key) => {
+            console.log("===== room:", key, " value:", value)
+        });
     }
 
     defaultSubscribe() {
         this.subscribe(Events.CONNECT, (data: any) => {
-            console.log(Events.CONNECT, "=>", this.socket?.id);
+            console.log(Events.CONNECT, "=>", this.socket?.id, " 是重连:", this.isReconnect);
             if (this.isReconnect) {
                 this.recoveryRoom()
                 return
