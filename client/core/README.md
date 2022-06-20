@@ -12,13 +12,7 @@ https://juejin.cn/post/6921870622565875726
 
 lsof -i:8000
 
--t  node16-macos-x64
-
-
-    "imagemin": "^8.0.0",
-    "imagemin-webp": "^7.0.0",
-
-    "@types/imagemin": "^8.0.0",
-    "@types/imagemin-webp": "^7.0.0",
-
 npm install -g express screenshot-desktop socket.io-client @squoosh/lib
+
+更改文件
+cp ./build/client/core/src/desktop/index.js  node_modules/screenshot-desktop/lib/win32/index.js

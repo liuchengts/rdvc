@@ -8,4 +8,5 @@ export const enum Events {
     JOIN_ROOM = "joinRoom",//加入房间
     LEAVE_ROOM = "leaveRoom",//退出房间
     SCREEN = "screen",//屏幕推图片流
+    RECONNECT_UPDATE = "reconnect Update",//客户端重连，更新信息
 }

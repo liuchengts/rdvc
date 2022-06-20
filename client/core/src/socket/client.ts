@@ -1,7 +1,7 @@
 import {io, Socket} from "socket.io-client";
 // @ts-ignore
 import {Events} from "../../../../common/events";
-import {desktopService} from "../desktop";
+import {desktopService, screenService} from "../desktop/screenshot";
 // @ts-ignore
 import {
     calculatedLength,
@@ -54,8 +54,9 @@ interface ClientSocketService {
 class ClientSocketServiceImpl implements ClientSocketService {
 
     private socket?: Socket
-
+    private oldSocketId?: string
     private roomAttribution = new Map<string, RoomDetails>()
+    private isReconnect = false
 
     init(connection: string) {
         this.socket = io(connection)
@@ -109,13 +110,46 @@ class ClientSocketServiceImpl implements ClientSocketService {
         })
     }
 
+    recoveryRoom() {
+        this.isReconnect = false
+        // 重连之后保留了room，但是id被更新了
+        const socketId = this.socket?.id!
+        desktopService.setSocketId(socketId)
+        this.roomAttribution.forEach((value, key) => {
+            if (value.attribution == this.oldSocketId) {
+                value.attribution = socketId
+            }
+            if (value.leave == this.oldSocketId) {
+                value.leave = socketId
+            }
+            value.socketIds.forEach(id => {
+                if (id == this.oldSocketId) {
+                    return socketId
+                }
+            })
+        });
+        this.oldSocketId = socketId
+        //todo  发送事件给服务端
+        this.replyToServer(Events.RECONNECT_UPDATE)
+    }
+
     defaultSubscribe() {
         this.subscribe(Events.CONNECT, (data: any) => {
             console.log(Events.CONNECT, "=>", this.socket?.id);
-            desktopService.setSocketId(this.socket?.id)
+            if (this.isReconnect) {
+                this.recoveryRoom()
+                return
+            }
+            this.oldSocketId = this.socket?.id
             // todo 临时启动
-            // desktopService.desktopInit()
-            // this.joinRoom("66611000")
+            desktopService.desktopInit()
+            this.joinRoom()
+            // this.joinRoom("548")
+            this.socket?.io.on(Events.RECONNECT, (data: any) => {
+                console.log("#socket client:", Events.RECONNECT, "=>", data);
+                this.isReconnect = true
+                screenService.continued()
+            })
         })
         this.subscribe(Events.INIT, (data: Buffer) => {
             processResponse<string>(data, (response: Response<string>) => {
@@ -161,6 +195,7 @@ class ClientSocketServiceImpl implements ClientSocketService {
         })
         this.subscribe(Events.DISCONNECT, (data: any) => {
             console.log("#socket client:", Events.DISCONNECT, "=>", data);
+            screenService.suspend()
         })
         this.subscribe(Events.ERROR, (data: any) => {
             console.log("subscribe#socket client:", Events.ERROR, "=>", data);

@@ -182,12 +182,8 @@ class DesktopServiceImpl implements DesktopService {
             console.warn("没有要接收的rooms")
             return
         }
-
         clientSocketService.pushToRoom(desktopScreen.rooms,
             new Response(true, desktopScreen.screen))
-        if (this.desktops.length < this.desktopsMax) {
-            screenService.continued()
-        }
     }
 
     setSocketId(socketId?: string) {

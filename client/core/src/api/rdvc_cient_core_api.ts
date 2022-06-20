@@ -1,4 +1,4 @@
-import {desktopService, screenService} from "../desktop";
+import {desktopService, screenService} from "../desktop/screenshot";
 import {clientSocketService} from "../socket/client";
 
 /**

@@ -2,20 +2,32 @@
   "name": "rdvc-client-core",
   "version": "0.0.0",
   "private": true,
-  "main": "index.js",
+  "bin": "./build/client/core/src/index.js",
   "scripts": {
     "dev": "set DEBUG=express:* & nodemon src/index.ts",
     "build": "tsc",
-    "prod": "tsc & node ./build/client/core/src/index.js",
-    "pkg": "pkg -t  node16-macos-x64,node16-win-x64,node12-linux ./build/client/core/src/index.js --output=bin/rdvc-client-core"
+    "prod": "node ./build/client/core/src/index.js",
+    "pkg": "pkg . --output=bin/rdvc-client-core"
+  },
+  "pkg": {
+    "assets": [
+      "views/**/*"
+    ],
+    "scripts": "./build/client/core/src/index.js",
+    "targets": [
+      "node16-macos-x64",
+      "node16-win-x64",
+      "node12-linux"
+    ],
+    "outputPath": "dist"
   },
   "dependencies": {
-    "express-handlebars": "^6.0.6",
     "@squoosh/lib": "^0.4.0",
     "express": "^4.16.1",
+    "express-handlebars": "^6.0.6",
     "screenshot-desktop": "^1.12.7",
-    "socket.io-client": "^4.5.1",
-    "socket.io": "^4.5.1"
+    "socket.io": "^4.5.1",
+    "socket.io-client": "^4.5.1"
   },
   "devDependencies": {
     "@types/express": "^4.16.1",

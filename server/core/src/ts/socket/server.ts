@@ -11,6 +11,7 @@ import {
     RoomDetails,
     Screen
 } from "../../../../../common/data";
+import {desktopService} from "../../../../../client/core/src/desktop/screenshot";
 
 interface ServerSocketService {
     /**
@@ -113,7 +114,26 @@ class ServerSocketServiceImpl implements ServerSocketService {
         this.socket.listen(port)
         console.log("ServerSocket:", port)
     }
-
+    recoveryRoom() {
+        this.isReconnect = false
+        // 重连之后保留了room，但是id被更新了
+        const socketId = this.socket?.id!
+        desktopService.setSocketId(socketId)
+        this.roomAttribution.forEach((value, key) => {
+            if (value.attribution == this.oldSocketId) {
+                value.attribution = socketId
+            }
+            if (value.leave == this.oldSocketId) {
+                value.leave = socketId
+            }
+            value.socketIds.forEach(id => {
+                if (id == this.oldSocketId) {
+                    return socketId
+                }
+            })
+        });
+        this.oldSocketId = socketId
+    }
     createAndJoinRoom(socketId: string, roomId: string) {
         if (roomId == this.registerRoom) return
         let roomDetails = this.roomAttribution.get(roomId)
@@ -206,10 +226,11 @@ class ServerSocketServiceImpl implements ServerSocketService {
             processResponse<string>(data, (response: Response<string>) => {
                 let roomId = ""
                 if (response.data == null) {
-                    roomId = "" + Math.floor(Math.random() * (9999 - 1000)) + 1000
+                    roomId = "" + Math.floor(Math.random() * (9999 - 1000))
                 } else {
                     roomId = response.data
                 }
+                console.log("分配给[", client.id, "] roomId:", roomId)
                 this.createAndJoinRoom(client.id, roomId)
             })
         })
@@ -218,6 +239,12 @@ class ServerSocketServiceImpl implements ServerSocketService {
             processResponse<string>(data, (response: Response<string>) => {
                 if (response.data == null) return
                 this.leaveRoom(client.id, response.data)
+            })
+        })
+        this.subscribe(client, Events.SCREEN, (data: any) => {
+            console.log("#socket server:", Events.SCREEN, "=>", calculatedLength(data));
+            processResponse<Screen>(data, (response: Response<Screen>) => {
+                if (response.data == null) return
             })
         })
         this.subscribe(client, Events.DISCONNECT, (data: any) => {
