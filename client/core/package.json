@@ -2,7 +2,7 @@
   "name": "rdvc-client-core",
   "version": "0.0.0",
   "private": true,
-  "bin": "./bin/www",
+  "main": "index.js",
   "scripts": {
     "dev": "set DEBUG=express:* & nodemon src/index.ts",
     "build": "tsc",

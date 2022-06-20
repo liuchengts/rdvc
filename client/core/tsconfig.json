@@ -10,7 +10,6 @@
     "allowJs": true
   },
   "include": [
-    "src/**/*.html",
     "src/**/*.ts",
     "src/**/*.tsx",
     "../../common/*.tsx",

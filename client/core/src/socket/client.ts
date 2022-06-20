@@ -114,7 +114,7 @@ class ClientSocketServiceImpl implements ClientSocketService {
             console.log(Events.CONNECT, "=>", this.socket?.id);
             desktopService.setSocketId(this.socket?.id)
             // todo 临时启动
-            desktopService.desktopInit()
+            // desktopService.desktopInit()
             // this.joinRoom("66611000")
         })
         this.subscribe(Events.INIT, (data: Buffer) => {
@@ -130,9 +130,9 @@ class ClientSocketServiceImpl implements ClientSocketService {
                         return
                     }
                     this.addRoomProcess(roomDetails)
-                    // 临时加入 测试leaveRoom
-                    this.leaveRoom(roomDetails.roomId)
-                    console.log("向服务器发送退出房间")
+                    // todo 临时加入 测试leaveRoom
+                    // this.leaveRoom(roomDetails.roomId)
+                    // console.log("向服务器发送退出房间")
                 })
             })
         })

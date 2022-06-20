@@ -13,6 +13,7 @@ app.engine('html', engine({
     defaultLayout: 'layout',
     extname: '.html'
 }))
+app.set('views', 'src/views')
 app.set('view engine', 'html')
 app.use('/', router)
 
