@@ -1,4 +1,3 @@
-//=======================
 const SCREEN_ID = "screen"
 
 export function screenData(buffer: Buffer) {

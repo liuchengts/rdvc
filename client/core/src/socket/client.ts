@@ -11,7 +11,6 @@ import {
     RoomDetails,
     Screen
 } from "../../../../common/data";
-import {screenData} from "../api/listens";
 
 interface ClientSocketService {
 

@@ -1,5 +1,5 @@
-import {desktopService, screenService} from "../desktop/screenshot";
-import {clientSocketService} from "../socket/client";
+import {desktopService, screenService} from "../../desktop/screenshot";
+import {clientSocketService} from "../../socket/client";
 
 /**
  * 启动截屏&推送任务
