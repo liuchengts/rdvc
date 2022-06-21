@@ -116,26 +116,40 @@ class ServerSocketServiceImpl implements ServerSocketService {
     }
 
     recoveryRoom(reconnectDetails: ReconnectDetails) {
-        console.log("recoveryRoom 更改前================")
-        this.roomAttribution.forEach((value, key) => {
-            console.log("===== room:", key, " value:", value)
-        });
-        this.roomAttribution.forEach((value, key) => {
-            if (value.attribution == reconnectDetails.oldSocketId) {
-                value.attribution = reconnectDetails.newSocketId
+        reconnectDetails.rooms.forEach(value => {
+            let key = value.roomId
+            let room = this.roomAttribution.get(key)
+            if (room == null) {
+                this.roomAttribution.set(key, value)
+            } else {
+                if (room.attribution == reconnectDetails.oldSocketId) {
+                    room.attribution = reconnectDetails.newSocketId
+                }
+                if (room.leave == reconnectDetails.oldSocketId) {
+                    room.leave = reconnectDetails.newSocketId
+                }
+                let index = value.socketIds.indexOf(reconnectDetails.oldSocketId!)
+                if (index != -1) {
+                    room.socketIds.splice(index, 1)
+                    room.socketIds.push(reconnectDetails.newSocketId)
+                }
+                this.roomAttribution.set(key, room)
             }
-            if (value.leave == reconnectDetails.oldSocketId) {
-                value.leave = reconnectDetails.newSocketId
-            }
-            let index = value.socketIds.indexOf(reconnectDetails.oldSocketId!)
-            if (index == -1) return
-            value.socketIds.splice(index, 1)
-            value.socketIds.push(reconnectDetails.newSocketId)
-        });
-        console.log("recoveryRoom 更改后================")
+            //重新加入房间
+            this.joinRoom(reconnectDetails.newSocketId, key)
+        })
+
+    }
+
+    getBySocketIdRoom(socketId: string): string[] {
+        let roomIds = new Array<string>()
         this.roomAttribution.forEach((value, key) => {
-            console.log("===== room:", key, " value:", value)
+            let index = value.socketIds.indexOf(socketId)
+            if (index != -1) {
+                roomIds.push(key)
+            }
         });
+        return roomIds
     }
 
     createAndJoinRoom(socketId: string, roomId: string) {
@@ -149,7 +163,7 @@ class ServerSocketServiceImpl implements ServerSocketService {
         }
         this.roomAttribution.set(roomId, roomDetails)
         this.joinRoom(socketId, roomId)
-        this.pushToClient(socketId, Events.JOIN_ROOM, new Response<RoomDetails>(true, roomDetails, "new room id"))
+        this.pushToClient(roomId, Events.JOIN_ROOM, new Response<RoomDetails>(true, roomDetails, "new room id"))
     }
 
     joinRoom(socketId: string, roomId: string) {
@@ -248,13 +262,19 @@ class ServerSocketServiceImpl implements ServerSocketService {
         this.subscribe(client, Events.SCREEN, (data: any) => {
             console.log("#socket server:", Events.SCREEN, "=>", calculatedLength(data));
             processResponse<Screen>(data, (response: Response<Screen>) => {
-                if (response.data == null) return
+                if (response.data == null) {
+                    console.log("data不能为空")
+                    return
+                }
+                let roomIds = this.getBySocketIdRoom(response.data.socketId)
+                this.pushToClients(roomIds, Events.SCREEN, response)
             })
         })
         this.subscribe(client, Events.RECONNECT_UPDATE, (data: any) => {
             console.log("#socket server:", Events.RECONNECT_UPDATE, "=>", calculatedLength(data));
             processResponse<ReconnectDetails>(data, (response: Response<ReconnectDetails>) => {
                 if (response.data == null) return
+                console.log(Events.RECONNECT_UPDATE, response.data)
                 this.recoveryRoom(response.data)
             })
         })

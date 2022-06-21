@@ -36,15 +36,18 @@ export class RoomDetails {
         public leave?: string) {
     }
 }
+
 /**
  * 客户端重连信息更新
  */
 export class ReconnectDetails {
     constructor(
         public oldSocketId: string,
-        public newSocketId: string) {
+        public newSocketId: string,
+        public rooms: RoomDetails[]) {
     }
 }
+
 /**
  * 解析 Response
  * @param data 压缩加密后的数据

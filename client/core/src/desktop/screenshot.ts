@@ -3,6 +3,7 @@ import {compressionService} from "../common/images";
 // @ts-ignore
 import screenshotDesktop from "screenshot-desktop";
 import {Response, Screen} from "../../../../common/data";
+import {Events} from "../../../../common/events";
 
 export class DesktopScreen {
     constructor(public rooms: string[],
@@ -182,8 +183,7 @@ class DesktopServiceImpl implements DesktopService {
             console.warn("没有要接收的rooms")
             return
         }
-        clientSocketService.pushToRoom(desktopScreen.rooms,
-            new Response(true, desktopScreen.screen))
+        clientSocketService.replyToServer(Events.SCREEN, new Response(true, desktopScreen.screen))
     }
 
     setSocketId(socketId?: string) {
