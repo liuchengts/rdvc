@@ -60,6 +60,7 @@ class ScreenService {
      * 暂停截取
      */
     suspend() {
+        if (!desktopService.isTask()) return;
         if (this.isSuspend) return
         this.isSuspend = true;
         console.log("截屏任务暂停")
@@ -69,6 +70,7 @@ class ScreenService {
      * 恢复截取
      */
     continued() {
+        if (!desktopService.isTask()) return;
         if (!this.isSuspend) return
         this.isSuspend = false;
         console.log("截屏任务继续开始")
@@ -114,10 +116,15 @@ interface DesktopService {
     desktopInit(socketId: string): void
 
     setSocketId(socketId?: string): void
+
+    /**
+     * 是否启动了task true表示是
+     */
+    isTask(): boolean
 }
 
 class DesktopServiceImpl implements DesktopService {
-    private isTask = false
+    private task = false
     private socketId?: string
     /**
      * 存储的待推送桌面图像
@@ -139,6 +146,10 @@ class DesktopServiceImpl implements DesktopService {
      * 设置默认的压缩比
      */
     private quality = 75;
+
+    isTask(): boolean {
+        return this.task
+    }
 
     addRooms(roomId: string) {
         if (this.rooms.length >= this.roomsMax) {
@@ -195,11 +206,11 @@ class DesktopServiceImpl implements DesktopService {
     }
 
     desktopInit() {
-        if (this.isTask) {
+        if (this.isTask()) {
             console.error("desktop 任务已启动")
             return
         }
-        this.isTask = true
+        this.task = true
         setInterval((): void => {
             if (this.socketId == undefined) {
                 console.warn("没有 socketId")
