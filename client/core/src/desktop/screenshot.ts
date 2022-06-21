@@ -2,15 +2,9 @@ import {clientSocketService} from "../socket/client";
 import {compressionService} from "../common/images";
 // @ts-ignore
 import screenshotDesktop from "screenshot-desktop";
-import {Response, Screen} from "../../../../common/data";
+import {DesktopScreen, Response, Screen} from "../../../../common/data";
 import {Events} from "../../../../common/events";
 
-export class DesktopScreen {
-    constructor(public rooms: string[],
-                public screen: Screen,
-                public time: Date) {
-    }
-}
 
 
 /**
@@ -194,7 +188,7 @@ class DesktopServiceImpl implements DesktopService {
             console.warn("没有要接收的rooms")
             return
         }
-        clientSocketService.replyToServer(Events.SCREEN, new Response(true, desktopScreen.screen))
+        clientSocketService.replyToServer(Events.SCREEN, new Response(true, desktopScreen))
     }
 
     setSocketId(socketId?: string) {

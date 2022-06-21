@@ -22,7 +22,7 @@
 </template>
 <script lang="ts">
 import {defineComponent} from 'vue'
-import {loginService} from "@/ts/logIn";
+import {loginService} from "@/ts/desktop";
 import {AResponse} from "@/ts/common/data";
 import {AUTH} from "@/ts/common/auth"
 import {VIEWS} from "@/ts/common/views";

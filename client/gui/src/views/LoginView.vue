@@ -2,26 +2,38 @@
   <div class="main">
     <el-row>
       <el-col :span="16">
-        <el-input v-model="input"></el-input>
+        <el-input v-model="roomId"></el-input>
       </el-col>
       <el-col :span="8">
-        <el-button type="primary" @click="sendMsg">Send</el-button>
+        <el-button type="primary" @click="applyJoinRoom">加入房间</el-button>
+      </el-col>
+    </el-row>
+    <el-row>
+      <el-col :span="8">
+        <el-button type="primary" @click="desktopInit">开始</el-button>
+      </el-col>
+      <el-col :span="8">
+        <el-button type="primary" @click="desktopSuspend">暂停</el-button>
+      </el-col>
+      <el-col :span="8">
+        <el-button type="primary" @click="desktopContinued">恢复</el-button>
       </el-col>
     </el-row>
     <div id="content">
-      <img :src="'data:image/png;base64,'+imgUrl" alt=""></div>
+      <!--      <img :src="'data:image/png;base64,'+imgUrl" alt=""></div>-->
+      <img :src="imgUrl" alt=""></div>
   </div>
 </template>
 <script lang="ts">
 import {defineComponent} from 'vue'
-import {Events} from "@/ts/socket/events";
-import {getScreen, pushToServer} from "@/ts/socket/client";
+import {desktopService} from "@/ts/desktop"
+import {Screen} from "../../../../common/data";
 
 export default defineComponent({
   name: "LoginView",
   data() {
     return {
-      input: "",
+      roomId: "",
       imgUrl: ""
     }
   },
@@ -37,15 +49,24 @@ export default defineComponent({
   //   }
   // },
   methods: {
-    interval() {
-      setInterval(() => {
-        this.imgUrl = getScreen()
-      }, 1000 * 5)
+    desktopInit() {
+      desktopService.desktopInit()
     },
-    sendMsg() {
-      // this.$emit(Events.CONNECT, this.input)
-      pushToServer(Events.INIT, this.input)
-      this.interval()
+    desktopSuspend() {
+      desktopService.desktopSuspend()
+    },
+    desktopContinued() {
+      desktopService.desktopContinued()
+    },
+    applyJoinRoom() {
+      desktopService.applyJoinRoom(this.$data.roomId, () => {
+        setInterval(() => {
+          desktopService.pullDesktop(this.$data.roomId, (screen: Screen | undefined) => {
+            if (screen == undefined) return
+            this.$data.imgUrl = "data:image/" + screen.extension + ";" + screen.imgBuffer
+          })
+        }, 1000)
+      })
     }
   }
 })

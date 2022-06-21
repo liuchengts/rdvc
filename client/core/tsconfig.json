@@ -1,11 +1,8 @@
 {
   "compilerOptions": {
     "esModuleInterop": true,
-    "moduleResolution": "node",
-    "module": "none",
-    //"module": "commonjs", // 指定生成代码的模板标准
-    "esModuleInterop": true,
-//    "resolveJsonModule": true,
+    "module": "commonjs", // 指定生成代码的模板标准
+    "resolveJsonModule": true,
     "removeComments": true, // 删除注释
     "target": "es6",// 目标语言的版本
     "rootDir": "../../", // 指定输出文件目录(用于输出)，用于控制输出目录结构

@@ -1,7 +1,7 @@
 import axios, {AxiosRequestConfig, AxiosRequestHeaders, AxiosResponse} from 'axios'
 import qs from "qs"
 import {AUTH} from "@/ts/common/auth"
-import {AResponse} from "@/ts/common/data";
+import {Response} from "@/ts/common/data";
 
 const showStatus = (status: number) => {
   let message: string
@@ -139,13 +139,13 @@ service.interceptors.request.use((config: AxiosRequestConfig) => {
 service.interceptors.response.use((response: AxiosResponse) => {
   removePending(response) // 在请求结束后，移除本次请求
   const status = response.status
-  let aResponse = new AResponse<any>()
+  let aResponse = new Response<any>(true)
   if (status < 200 || status >= 300) {
     // 处理http错误，抛到业务代码
     aResponse.message = showStatus(status)
   } else {
     aResponse = response.data
-    if (aResponse.status !== 'A-1000') {
+    if (!aResponse.successful) {
       return Promise.reject(new Error(aResponse.message || 'Error'))
     } else {
       return aResponse

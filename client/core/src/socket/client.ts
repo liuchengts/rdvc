@@ -4,7 +4,7 @@ import {Events} from "../../../../common/events";
 import {desktopService, screenService} from "../desktop/screenshot";
 // @ts-ignore
 import {
-    calculatedLength,
+    calculatedLength, DesktopScreen,
     packageResponse,
     processResponse, ReconnectDetails,
     Response,
@@ -39,6 +39,10 @@ interface ClientSocketService {
      * @param roomId 房间号
      */
     leaveRoom(roomId: string): void
+
+    addScreenCache(rooms: string[], screen: Screen): void
+
+    shiftScreenCache(rooms: string): Screen | undefined
 }
 
 class ClientSocketServiceImpl implements ClientSocketService {
@@ -47,11 +51,37 @@ class ClientSocketServiceImpl implements ClientSocketService {
     private oldSocketId?: string
     private roomAttribution = new Map<string, RoomDetails>()
     private isReconnect = false
+    private screenCache = new Map<string, Array<Screen>>()
+    private screenCacheMax = 3
+
 
     test() {
         // todo 临时启动
         // desktopService.desktopInit()
         // this.joinRoom("1")
+    }
+
+    shiftScreenCache(roomId: string): Screen | undefined {
+        const mapCache = this.screenCache.get(roomId)
+        if (mapCache == null) return undefined
+        //todo  这里拉取一帧数据需要考虑多个客户端拉取同一个room的情况
+        return mapCache.shift()
+    }
+
+    addScreenCache(rooms: string[], screen: Screen) {
+        rooms.forEach(roomId => {
+            const mapCache = this.screenCache.get(roomId)
+            if (mapCache == null) {
+                this.screenCache.set(roomId, Array(screen))
+            } else {
+                if (mapCache.length >= this.screenCacheMax) {
+                    mapCache.shift()
+                    console.log("移除最早的一帧缓存")
+                }
+                mapCache.push(screen)
+            }
+        })
+
     }
 
     init(connection: string) {
@@ -172,14 +202,15 @@ class ClientSocketServiceImpl implements ClientSocketService {
             })
         })
         this.subscribe(Events.SCREEN, (data: Buffer) => {
-            processResponse<Screen>(data, (response: Response<Screen>) => {
+            processResponse<DesktopScreen>(data, (response: Response<DesktopScreen>) => {
                 if (response.data == null) return
-                if (response.data!.socketId == this.socket?.id) {
+                const screen = response.data!.screen
+                if (screen.socketId == this.socket?.id) {
                     console.log("收到自己发出的消息，忽略掉")
                     return
                 }
                 console.log("收到共享屏幕消息", Events.SCREEN, "=>", response);
-                // screenData(response.data.imgBuffer)
+                this.addScreenCache(response.data!.rooms!, screen)
             })
         })
         this.subscribe(Events.DISCONNECT, (data: any) => {

@@ -4,7 +4,7 @@ import * as http from "http";
 import {Events} from "../../../../../common/events";
 // @ts-ignore
 import {
-    calculatedLength,
+    calculatedLength, DesktopScreen,
     packageResponse,
     processResponse, ReconnectDetails,
     Response,
@@ -261,13 +261,12 @@ class ServerSocketServiceImpl implements ServerSocketService {
         })
         this.subscribe(client, Events.SCREEN, (data: any) => {
             console.log("#socket server:", Events.SCREEN, "=>", calculatedLength(data));
-            processResponse<Screen>(data, (response: Response<Screen>) => {
+            processResponse<DesktopScreen>(data, (response: Response<DesktopScreen>) => {
                 if (response.data == null) {
                     console.log("data不能为空")
                     return
                 }
-                let roomIds = this.getBySocketIdRoom(response.data.socketId)
-                this.pushToClients(roomIds, Events.SCREEN, response)
+                this.pushToClients(response.data.rooms, Events.SCREEN, response)
             })
         })
         this.subscribe(client, Events.RECONNECT_UPDATE, (data: any) => {

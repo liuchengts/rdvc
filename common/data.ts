@@ -10,6 +10,12 @@ export class Response<T> {
                 public message?: string) {
     }
 }
+export class DesktopScreen {
+    constructor(public rooms: string[],
+                public screen: Screen,
+                public time: Date) {
+    }
+}
 
 /**
  * 屏幕数据
