@@ -3,13 +3,6 @@ const port = process.env.port || process.env.npm_config_port || 8080 // dev port
 const webpack = require('webpack')
 
 module.exports = defineConfig({
-  configureWebpack: {
-    plugins: [
-      new webpack.ProvidePlugin({
-        Buffer: ['buffer', 'Buffer']
-      })
-    ],
-  },
   publicPath: '/',
   outputDir: 'dist',
   assetsDir: 'static',
