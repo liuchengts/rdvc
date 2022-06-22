@@ -1,21 +1,21 @@
 <template>
-  <div class="main">
+  <div class="main" style="justify-content:center">
     <el-row>
-      <el-col :span="16">
-        <el-input v-model="roomId"></el-input>
-      </el-col>
       <el-col :span="8">
-        <el-button type="primary" @click="applyJoinRoom">加入房间</el-button>
+        <el-input v-model="roomId"></el-input>
       </el-col>
     </el-row>
     <el-row>
-      <el-col :span="8">
+      <el-col :span="2">
+        <el-button type="primary" @click="applyJoinRoom">加入房间</el-button>
+      </el-col>
+      <el-col :span="2">
         <el-button type="primary" @click="desktopInit">开始</el-button>
       </el-col>
-      <el-col :span="8">
+      <el-col :span="2">
         <el-button type="primary" @click="desktopSuspend">暂停</el-button>
       </el-col>
-      <el-col :span="8">
+      <el-col :span="2">
         <el-button type="primary" @click="desktopContinued">恢复</el-button>
       </el-col>
     </el-row>

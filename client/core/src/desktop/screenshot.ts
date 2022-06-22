@@ -6,7 +6,6 @@ import {DesktopScreen, Response, Screen} from "../../../../common/data";
 import {Events} from "../../../../common/events";
 
 
-
 /**
  * 截取屏幕的定时，单位ms
  */
@@ -16,7 +15,7 @@ class ScreenService {
     /**
      * 截屏事件开关
      */
-    private isSuspend: boolean = false;
+    private suspendFag: boolean = false;
     private indexSuspend: number = 0;
 
     /**
@@ -38,7 +37,7 @@ class ScreenService {
      */
     startScreenshotTimer(callback: Function) {
         let time = new Date();
-        if (this.isSuspend) {
+        if (this.isSuspend()) {
             if (this.indexSuspend > 0) return
             console.log("截屏暂停[", this.indexSuspend, "]", time)
             this.indexSuspend++
@@ -50,13 +49,17 @@ class ScreenService {
         }
     }
 
+    isSuspend(): boolean {
+        return this.suspendFag
+    }
+
     /**
      * 暂停截取
      */
     suspend() {
         if (!desktopService.isTask()) return;
-        if (this.isSuspend) return
-        this.isSuspend = true;
+        if (this.isSuspend()) return
+        this.suspendFag = true;
         console.log("截屏任务暂停")
     }
 
@@ -65,8 +68,8 @@ class ScreenService {
      */
     continued() {
         if (!desktopService.isTask()) return;
-        if (!this.isSuspend) return
-        this.isSuspend = false;
+        if (!this.isSuspend()) return
+        this.suspendFag = false;
         console.log("截屏任务继续开始")
     }
 
@@ -206,6 +209,7 @@ class DesktopServiceImpl implements DesktopService {
         }
         this.task = true
         setInterval((): void => {
+            if (screenService.isSuspend()) return;
             if (this.socketId == undefined) {
                 console.warn("没有 socketId")
                 screenService.suspend()
