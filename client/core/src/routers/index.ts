@@ -12,7 +12,7 @@ export let router = express.Router();
  */
 router.get('/desktop_init', function (req, res) {
     desktopService.desktopInit()
-    resJson(req)
+    resJson(res)
 });
 
 /**
@@ -20,7 +20,7 @@ router.get('/desktop_init', function (req, res) {
  */
 router.get('/desktop_suspend', function (req, res) {
     screenService.suspend()
-    resJson(req)
+    resJson(res)
 });
 
 /**
@@ -28,20 +28,20 @@ router.get('/desktop_suspend', function (req, res) {
  */
 router.get('/desktop_continued', function (req, res) {
     screenService.continued()
-    resJson(req)
+    resJson(res)
 });
 /**
  * 申请加入房间
  */
 router.get('/apply_join_room', function (req, res) {
     clientSocketService.joinRoom(req.get("roomId"))
-    resJson(req)
+    resJson(res)
 });
 /**
  * 拉取一帧桌面画面
  */
 router.get('/pull_desktop', function (req, res) {
-    resJson(req, clientSocketService.shiftScreenCache(<string>req.get("roomId")))
+    resJson(res, clientSocketService.shiftScreenCache(<string>req.get("roomId")))
 });
 
 //GET home page.
@@ -77,5 +77,6 @@ router.get('/main', function (req, res) {
 
 function resJson(result: any, obj?: any) {
     result.setHeader('Content-Type', 'application/json');
-    result.end(JSON.stringify(new Response(true, obj, "ok")));
+    result.json(JSON.stringify(new Response(true, obj, "ok")))
+    // result.end(JSON.stringify(new Response(true, obj, "ok")));
 }

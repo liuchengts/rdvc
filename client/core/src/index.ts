@@ -18,7 +18,7 @@ app.engine('html', engine({
 app.set('views', 'src/public/views')
 app.set('view engine', 'html')
 app.use('/', router)
-
+app.disable('etag');//解决 http状态码 304
 const client_socket_prot = 8000
 const connection = "http://10.30.20.177:" + client_socket_prot
 // const connection = "http://192.168.50.71:" + client_socket_prot
