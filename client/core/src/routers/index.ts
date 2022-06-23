@@ -2,7 +2,7 @@
 import express from 'express';
 import {desktopService, screenService} from "../desktop/screenshot";
 import {clientSocketService} from "../socket/client";
-import {Response} from "../../../../common/data";
+import {Response, ScreenBase64} from "../../../../common/data";
 
 export let router = express.Router();
 
@@ -33,15 +33,21 @@ router.get('/desktop_continued', function (req, res) {
 /**
  * 申请加入房间
  */
-router.get('/apply_join_room', function (req, res) {
-    clientSocketService.joinRoom(req.get("roomId"))
+router.get('/apply_join_room/:roomId', function (req, res) {
+    clientSocketService.joinRoom(req.params.roomId)
     resJson(res)
 });
 /**
  * 拉取一帧桌面画面
  */
-router.get('/pull_desktop', function (req, res) {
-    resJson(res, clientSocketService.shiftScreenCache(<string>req.get("roomId")))
+router.get('/pull_desktop/:roomId', function (req, res) {
+    const screen = clientSocketService.shiftScreenCache(req.params.roomId)
+    let data: any
+    if (screen != null) {
+        data = new ScreenBase64(screen.socketId, screen.imgBuffer.toString("base64"), screen.quality, screen.extension, screen.width, screen.height)
+    }
+    console.log("pull_desktop=>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>:", data, req.params.roomId)
+    resJson(res, data)
 });
 
 //GET home page.

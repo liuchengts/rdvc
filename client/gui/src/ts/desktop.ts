@@ -46,11 +46,11 @@ class DesktopService extends BaseService implements DesktopInterface {
   }
 
   applyJoinRoom(roomId: string, nativeCallback?: Function): void {
-    this.promiseHandle(service.get("/apply_join_room?roomId=" + roomId), nativeCallback)
+    this.promiseHandle(service.get("/apply_join_room/" + roomId), nativeCallback)
   }
 
   pullDesktop(roomId: string, nativeCallback?: Function): void {
-    this.promiseHandle(service.get("/pull_desktop?roomId=" + roomId), nativeCallback)
+    this.promiseHandle(service.get("/pull_desktop/" + roomId), nativeCallback)
   }
 }
 

@@ -125,8 +125,8 @@ service.interceptors.request.use((config: AxiosRequestConfig) => {
       "x-token": token
     }, config)
   }
-  removePending(config) // 在请求开始前，对之前的请求做检查取消操作
-  addPending(config) // 将当前请求添加到 pending 中
+  // removePending(config) // 在请求开始前，对之前的请求做检查取消操作
+  // addPending(config) // 将当前请求添加到 pending 中
   return config
 }, (error) => {
   // 错误抛到业务代码
@@ -145,6 +145,10 @@ service.interceptors.response.use((response: AxiosResponse) => {
     aResponse.message = showStatus(status)
   } else {
     aResponse = response.data
+
+    if (aResponse.successful==undefined){
+      console.log("response：",response.data)
+    }
     if (!aResponse.successful) {
       return Promise.reject(new Error(aResponse.message || 'Error'))
     } else {

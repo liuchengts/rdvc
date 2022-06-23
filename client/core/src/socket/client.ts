@@ -63,7 +63,10 @@ class ClientSocketServiceImpl implements ClientSocketService {
 
     shiftScreenCache(roomId: string): Screen | undefined {
         const mapCache = this.screenCache.get(roomId)
-        if (mapCache == null) return undefined
+        if (mapCache == null) {
+            console.log("不存在 mapCache:", roomId)
+            return undefined
+        }
         //todo  这里拉取一帧数据需要考虑多个客户端拉取同一个room的情况
         return mapCache.shift()
     }
@@ -76,12 +79,11 @@ class ClientSocketServiceImpl implements ClientSocketService {
             } else {
                 if (mapCache.length >= this.screenCacheMax) {
                     mapCache.shift()
-                    console.log("移除最早的一帧缓存")
                 }
                 mapCache.push(screen)
+                this.screenCache.set(roomId, mapCache)
             }
         })
-
     }
 
     init(connection: string) {

@@ -27,7 +27,7 @@
 <script lang="ts">
 import {defineComponent} from 'vue'
 import {desktopService} from "@/ts/desktop"
-import {Screen} from "../../../../common/data";
+import {ScreenBase64} from "../../../../common/data";
 
 export default defineComponent({
   name: "LoginView",
@@ -61,9 +61,9 @@ export default defineComponent({
     applyJoinRoom() {
       desktopService.applyJoinRoom(this.$data.roomId, () => {
         setInterval(() => {
-          desktopService.pullDesktop(this.$data.roomId, (screen: Screen | undefined) => {
+          desktopService.pullDesktop(this.$data.roomId, (screen: ScreenBase64 | undefined) => {
             if (screen == undefined) return
-            this.$data.imgUrl = "data:image/" + screen.extension + ";" + screen.imgBuffer
+            this.$data.imgUrl = "'data:image/jpg;base64,'"+screen.imgBufferBase64
           })
         }, 1000)
       })

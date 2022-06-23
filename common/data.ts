@@ -30,7 +30,19 @@ export class Screen {
         public height?: number) {
     }
 }
-
+/**
+ * 屏幕数据
+ */
+export class ScreenBase64 {
+    constructor(
+        public socketId: string,
+        public imgBufferBase64: string,
+        public quality: number,
+        public extension: string,
+        public width?: number,
+        public height?: number) {
+    }
+}
 /**
  * 房间信息传输模型
  */

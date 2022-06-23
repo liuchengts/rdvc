@@ -172,9 +172,6 @@ class DesktopServiceImpl implements DesktopService {
         let extension = promise.extension
         let screen = new Screen(this.socketId!, buffer, quality, extension, width, height)
         this.desktops.push(new DesktopScreen(this.rooms, screen, new Date()))
-        this.desktops.forEach(d => {
-            console.log("desktops中的元素：", d.time)
-        })
     }
 
     getNextDesktopScreen(): DesktopScreen | undefined {
