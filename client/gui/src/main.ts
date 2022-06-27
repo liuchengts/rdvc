@@ -4,10 +4,10 @@ import router from './router'
 import store from './store'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
-// import {clientSocket} from "@/ts/socket/ClientIo";
+import {clientSocket} from "@/ts/socket/ClientIo";
 
 createApp(App)
-  // .use(clientSocket)
+  .use(clientSocket)
   .use(store)
   .use(router)
   .use(ElementPlus)

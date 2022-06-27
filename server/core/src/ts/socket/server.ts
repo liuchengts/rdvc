@@ -12,6 +12,7 @@ import {
     Screen
 } from "../../../../../common/data";
 import {desktopService} from "../../../../../client/core/src/desktop/screenshot";
+import {RoomsServiceImpl} from "./rooms";
 
 interface ServerSocketService {
     /**
@@ -52,35 +53,14 @@ interface ServerSocketService {
      */
     defaultSubscribe(client: any): void
 
+    /**
+     * 回复客户端消息
+     * @param client 客户端
+     * @param event 事件
+     * @param response  推送的消息
+     * @param isDeflate 是否加密
+     */
     pushToClientLocal(client: any, event: Events, response: Response<any>, isDeflate?: boolean): void
-
-    // 系统操作api
-    /**
-     * 将socket客户端加入某个房间
-     * @param socketId  socket客户端
-     * @param roomId  房间号
-     */
-    joinRoom(socketId: string, roomId: string): void
-
-    /**
-     * 将socket客户端移除某个房间
-     * @param socketId  socket客户端
-     * @param roomId  房间号
-     */
-    leaveRoom(socketId: string, roomId: string): void
-
-    /**
-     * 强制让某个房间下的所有socket客户端关闭连接
-     * @param roomId  房间号
-     */
-    disconnectRoom(roomId: string): void
-
-    /**
-     * 获取某个房间下的socket客户端
-     * @param roomId 房间号
-     * @param callback 回调函数-在获得当前房间下所有socket客户端后执行
-     */
-    getRoomSockets(roomId: string, callback: Function): void
 }
 
 class ServerSocketServiceImpl implements ServerSocketService {
@@ -88,14 +68,7 @@ class ServerSocketServiceImpl implements ServerSocketService {
      * 服务端 socket
      */
     private socket?: Server;
-    /**
-     * 默认加入的注册房间
-     */
-    private registerRoom = "REGISTER_ROOM"
-    /**
-     * 房间的归属者
-     */
-    private roomAttribution = new Map<string, RoomDetails>()
+    private roomsService?: RoomsServiceImpl;
 
     init(port: number, httpServer: http.Server) {
         this.socket = new Server(httpServer, {
@@ -106,93 +79,13 @@ class ServerSocketServiceImpl implements ServerSocketService {
         });
         this.socket.on(Events.CONNECTION, (client: any) => {
             console.log("#socket server: welcome", Events.CONNECTION, "=>", client.id);
-            this.joinRoom(client.id, this.registerRoom)
             this.pushToClientLocal(client, Events.INIT, new Response(true, null,
                 "欢迎连接socket"))
             this.defaultSubscribe(client)
         });
         this.socket.listen(port)
+        this.roomsService = new RoomsServiceImpl(this.socket)
         console.log("ServerSocket:", port)
-    }
-
-    recoveryRoom(reconnectDetails: ReconnectDetails) {
-        reconnectDetails.rooms.forEach(value => {
-            let key = value.roomId
-            let room = this.roomAttribution.get(key)
-            if (room == null) {
-                this.roomAttribution.set(key, value)
-            } else {
-                if (room.attribution == reconnectDetails.oldSocketId) {
-                    room.attribution = reconnectDetails.newSocketId
-                }
-                if (room.leave == reconnectDetails.oldSocketId) {
-                    room.leave = reconnectDetails.newSocketId
-                }
-                let index = value.socketIds.indexOf(reconnectDetails.oldSocketId!)
-                if (index != -1) {
-                    room.socketIds.splice(index, 1)
-                    room.socketIds.push(reconnectDetails.newSocketId)
-                }
-                this.roomAttribution.set(key, room)
-            }
-            //重新加入房间
-            this.joinRoom(reconnectDetails.newSocketId, key)
-        })
-
-    }
-
-    getBySocketIdRoom(socketId: string): string[] {
-        let roomIds = new Array<string>()
-        this.roomAttribution.forEach((value, key) => {
-            let index = value.socketIds.indexOf(socketId)
-            if (index != -1) {
-                roomIds.push(key)
-            }
-        });
-        return roomIds
-    }
-
-    createAndJoinRoom(socketId: string, roomId: string) {
-        if (roomId == this.registerRoom) return
-        let roomDetails = this.roomAttribution.get(roomId)
-        if (roomDetails == null) {
-            //不存在房间，注册为房间拥有者
-            roomDetails = new RoomDetails(roomId, socketId, [socketId])
-        } else {
-            roomDetails.socketIds.push(socketId)
-        }
-        this.roomAttribution.set(roomId, roomDetails)
-        this.joinRoom(socketId, roomId)
-        this.pushToClient(roomId, Events.JOIN_ROOM, new Response<RoomDetails>(true, roomDetails, "new room id"))
-    }
-
-    joinRoom(socketId: string, roomId: string) {
-        this.socket?.in(socketId).socketsJoin(roomId)
-    }
-
-    leaveRoom(socketId: string, roomId: string) {
-        let roomDetails = this.roomAttribution.get(roomId)
-        if (roomDetails != null) {
-            roomDetails.leave = socketId
-            if (roomDetails.attribution == socketId) {
-                console.log("房间拥有者主动退出房间 socketId:", socketId, " roomId:", roomId)
-                this.pushToClient(socketId, Events.LEAVE_ROOM, new Response<RoomDetails>(true, roomDetails))
-                //清除房间
-                this.roomAttribution.delete(roomId)
-            } else {
-                this.pushToClient(roomId, Events.LEAVE_ROOM, new Response<RoomDetails>(true, roomDetails))
-            }
-        }
-        this.socket?.in(socketId).socketsLeave(roomId)
-    }
-
-    disconnectRoom(roomId: string) {
-        this.socket?.in(roomId).disconnectSockets(true)
-    }
-
-    async getRoomSockets(roomId: string, callback: Function) {
-        const sockets = await this.socket?.in(roomId).fetchSockets();
-        callback(sockets)
     }
 
     subscribe(client: Server, event: Events, process?: Function) {
@@ -249,14 +142,14 @@ class ServerSocketServiceImpl implements ServerSocketService {
                     roomId = response.data
                 }
                 console.log("分配给[", client.id, "] roomId:", roomId)
-                this.createAndJoinRoom(client.id, roomId)
+                this.roomsService?.createAndJoinRoom(client.id, roomId)
             })
         })
         this.subscribe(client, Events.LEAVE_ROOM, (data: any) => {
             console.log("#socket server:", Events.LEAVE_ROOM, "=>", calculatedLength(data));
             processResponse<string>(data, (response: Response<string>) => {
                 if (response.data == null) return
-                this.leaveRoom(client.id, response.data)
+                this.roomsService?.leaveRoom(client.id, response.data)
             })
         })
         this.subscribe(client, Events.SCREEN, (data: any) => {
@@ -274,7 +167,7 @@ class ServerSocketServiceImpl implements ServerSocketService {
             processResponse<ReconnectDetails>(data, (response: Response<ReconnectDetails>) => {
                 if (response.data == null) return
                 console.log(Events.RECONNECT_UPDATE, response.data)
-                this.recoveryRoom(response.data)
+                this.roomsService?.recoveryRoom(response.data)
             })
         })
 

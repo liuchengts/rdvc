@@ -172,19 +172,19 @@ class ClientSocketServiceImpl implements ClientSocketService {
             processResponse<string>(data, (response: Response<string>) => {
                 console.log(Events.INIT, "=>", response);
             })
-            this.subscribe(Events.JOIN_ROOM, (data: Buffer) => {
-                processResponse<RoomDetails>(data, (response: Response<RoomDetails>) => {
-                    console.log(Events.JOIN_ROOM, "=>", response);
-                    let roomDetails = response.data
-                    if (roomDetails == null) {
-                        console.log("加入房间失败");
-                        return
-                    }
-                    this.addRoomProcess(roomDetails)
-                    // todo 临时加入 测试leaveRoom
-                    // this.leaveRoom(roomDetails.roomId)
-                    // console.log("向服务器发送退出房间")
-                })
+        })
+        this.subscribe(Events.JOIN_ROOM, (data: Buffer) => {
+            processResponse<RoomDetails>(data, (response: Response<RoomDetails>) => {
+                console.log(Events.JOIN_ROOM, "=>", response);
+                let roomDetails = response.data
+                if (roomDetails == null) {
+                    console.log("加入房间失败");
+                    return
+                }
+                this.addRoomProcess(roomDetails)
+                // todo 临时加入 测试leaveRoom
+                // this.leaveRoom(roomDetails.roomId)
+                // console.log("向服务器发送退出房间")
             })
         })
         this.subscribe(Events.LEAVE_ROOM, (data: Buffer) => {
