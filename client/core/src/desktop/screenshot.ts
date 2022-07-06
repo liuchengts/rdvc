@@ -167,6 +167,7 @@ class DesktopServiceImpl implements DesktopService {
         console.log("压缩前的图片大小:", imgBuffer.length / 1024, "kb")
         //将图片编码压缩 imgStr
         let promise = await compressionService.compImg(imgBuffer, quality, width, height)
+        //todo  针对promise.binary.buffer 做测试，确定img base64转换正确
         let buffer = Buffer.from(promise.binary.buffer)
         console.log("压缩后的图片大小:", buffer.length / 1024, "kb")
         let extension = promise.extension

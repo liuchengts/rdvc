@@ -63,7 +63,6 @@ const service = axios.create({
     if (typeof data === 'string' && data.startsWith('{')) {
       data = JSON.parse(data)
     }
-    console.log("data:" + data)
     return data
   }]
 
@@ -145,10 +144,6 @@ service.interceptors.response.use((response: AxiosResponse) => {
     aResponse.message = showStatus(status)
   } else {
     aResponse = response.data
-
-    if (aResponse.successful==undefined){
-      console.log("response：",response.data)
-    }
     if (!aResponse.successful) {
       return Promise.reject(new Error(aResponse.message || 'Error'))
     } else {

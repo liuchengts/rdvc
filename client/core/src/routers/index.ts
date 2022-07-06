@@ -44,6 +44,8 @@ router.get('/pull_desktop/:roomId', function (req, res) {
     const screen = clientSocketService.shiftScreenCache(req.params.roomId)
     let data: any
     if (screen != null) {
+        console.log("base64:", screen.imgBuffer.toString("base64"))
+        console.log("base64 test:", Buffer.from("test").toString("base64"))
         data = new ScreenBase64(screen.socketId, screen.imgBuffer.toString("base64"), screen.quality, screen.extension, screen.width, screen.height)
     }
     console.log("pull_desktop=>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>:", data, req.params.roomId)
@@ -83,6 +85,6 @@ router.get('/main', function (req, res) {
 
 function resJson(result: any, obj?: any) {
     result.setHeader('Content-Type', 'application/json');
-    result.json(JSON.stringify(new Response(true, obj, "ok")))
+    result.json(new Response(true, obj, "ok"))
     // result.end(JSON.stringify(new Response(true, obj, "ok")));
 }

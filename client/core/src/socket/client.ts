@@ -207,10 +207,11 @@ class ClientSocketServiceImpl implements ClientSocketService {
             processResponse<DesktopScreen>(data, (response: Response<DesktopScreen>) => {
                 if (response.data == null) return
                 const screen = response.data!.screen
-                if (screen.socketId == this.socket?.id) {
-                    console.log("收到自己发出的消息，忽略掉")
-                    return
-                }
+                //todo  测试打开
+                // if (screen.socketId == this.socket?.id) {
+                //     console.log("收到自己发出的消息，忽略掉")
+                //     return
+                // }
                 console.log("收到共享屏幕消息", Events.SCREEN, "=>", response);
                 this.addScreenCache(response.data!.rooms!, screen)
             })
