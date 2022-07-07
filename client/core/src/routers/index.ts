@@ -48,7 +48,7 @@ router.get('/pull_desktop/:roomId', function (req, res) {
         data = new ScreenBase64(screen.socketId, Buffer.from(screen.imgBuffer).toString('base64'),
             screen.quality, screen.extension, screen.width, screen.height)
     }
-    console.log("pull_desktop=>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>:", data, req.params.roomId)
+    console.log("pull_desktop=>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>roomId:", req.params.roomId)
     resJson(res, data)
 });
 

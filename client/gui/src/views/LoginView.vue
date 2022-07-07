@@ -21,20 +21,23 @@
     </el-row>
     <div id="content">
       <!--      <img :src="'data:image/png;base64,'+imgUrl" alt=""></div>-->
+
       <img :src="imgUrl" alt=""></div>
+
   </div>
 </template>
 <script lang="ts">
 import {defineComponent} from 'vue'
 import {desktopService} from "@/ts/desktop"
-import {Screen, ScreenBase64, Response} from "../../../../common/data";
+import {ScreenBase64, Response} from "../../../../common/data";
 
 export default defineComponent({
   name: "LoginView",
   data() {
     return {
       roomId: "",
-      imgUrl: ""
+      imgUrl: "",
+      timer: 0
     }
   },
   // sockets: {
@@ -53,27 +56,30 @@ export default defineComponent({
       desktopService.desktopInit()
     },
     desktopSuspend() {
+      clearInterval(this.timer)
       desktopService.desktopSuspend()
     },
     desktopContinued() {
       desktopService.desktopContinued()
+      this.pullDesktop()
     },
     applyJoinRoom() {
       desktopService.applyJoinRoom(this.$data.roomId, () => {
-        setInterval(() => {
-          desktopService.pullDesktop(this.$data.roomId, (promise: Promise<Response<ScreenBase64>>) => {
-            promise.then(aResponse => {
-              console.log("Screen aResponse:", aResponse)
-              this.$data.imgUrl = "data:image/jpg;base64," + aResponse.data?.imgBufferBase64
-            }).catch(aResponse => {
-              // 失败的处理函数
-              console.log(aResponse)
-            })
-          })
-        }, 1000)
+        this.pullDesktop()
       })
-
-
+    },
+    pullDesktop() {
+      this.timer = Number(setInterval(() => {
+        desktopService.pullDesktop(this.$data.roomId, (promise: Promise<Response<ScreenBase64>>) => {
+          promise.then(aResponse => {
+            console.log("Screen aResponse:", aResponse)
+            this.$data.imgUrl = "data:image/jpg;base64," + aResponse.data?.imgBufferBase64
+          }).catch(aResponse => {
+            // 失败的处理函数
+            console.log(aResponse)
+          })
+        })
+      }, 1000))
     }
   }
 })
