@@ -79,6 +79,7 @@ class ClientSocketServiceImpl implements ClientSocketService {
             } else {
                 if (mapCache.length >= this.screenCacheMax) {
                     mapCache.shift()
+                    console.log("移除最早的一个 mapCache")
                 }
                 mapCache.push(screen)
                 this.screenCache.set(roomId, mapCache)
@@ -89,7 +90,7 @@ class ClientSocketServiceImpl implements ClientSocketService {
     init(connection: string) {
         this.socket = io(connection)
         this.defaultSubscribe()
-        console.log("client core clientSocket start");
+        //console.log("client core clientSocket start");
     }
 
     subscribe(event: Events, process?: Function) {
@@ -121,7 +122,7 @@ class ClientSocketServiceImpl implements ClientSocketService {
     }
 
     replyToServer(event: Events, response: Response<any>): void {
-        console.log("向服务器发消息[", event, "]发消息:", response)
+        //console.log("向服务器发消息[", event, "]发消息:", response)
         packageResponse(response, (result: Buffer) => {
             this.socket?.compress(true).emit(event, result)
         })
@@ -152,7 +153,7 @@ class ClientSocketServiceImpl implements ClientSocketService {
 
     defaultSubscribe() {
         this.subscribe(Events.CONNECT, (data: any) => {
-            console.log(Events.CONNECT, "=>", this.socket?.id, " 是重连:", this.isReconnect);
+            //console.log(Events.CONNECT, "=>", this.socket?.id, " 是重连:", this.isReconnect);
             desktopService.setSocketId(this.socket?.id)
             if (this.isReconnect) {
                 this.recoveryRoom()
@@ -161,7 +162,7 @@ class ClientSocketServiceImpl implements ClientSocketService {
             this.oldSocketId = this.socket?.id
             this.joinRoom()
             this.socket?.io.on(Events.RECONNECT, (data: any) => {
-                console.log("#socket client:", Events.RECONNECT, "=>", data);
+                //console.log("#socket client:", Events.RECONNECT, "=>", data);
                 this.isReconnect = true
                 screenService.continued()
             })
@@ -170,36 +171,36 @@ class ClientSocketServiceImpl implements ClientSocketService {
         })
         this.subscribe(Events.INIT, (data: Buffer) => {
             processResponse<string>(data, (response: Response<string>) => {
-                console.log(Events.INIT, "=>", response);
+                //console.log(Events.INIT, "=>", response);
             })
         })
         this.subscribe(Events.JOIN_ROOM, (data: Buffer) => {
             processResponse<RoomDetails>(data, (response: Response<RoomDetails>) => {
-                console.log(Events.JOIN_ROOM, "=>", response);
+                //console.log(Events.JOIN_ROOM, "=>", response);
                 let roomDetails = response.data
                 if (roomDetails == null) {
-                    console.log("加入房间失败");
+                    //console.log("加入房间失败");
                     return
                 }
                 this.addRoomProcess(roomDetails)
                 // todo 临时加入 测试leaveRoom
                 // this.leaveRoom(roomDetails.roomId)
-                // console.log("向服务器发送退出房间")
+                // //console.log("向服务器发送退出房间")
             })
         })
         this.subscribe(Events.LEAVE_ROOM, (data: Buffer) => {
             processResponse<RoomDetails>(data, (response: Response<RoomDetails>) => {
-                console.log(Events.LEAVE_ROOM, "=>", response);
+                //console.log(Events.LEAVE_ROOM, "=>", response);
                 let roomDetails = response.data
                 if (roomDetails == null) {
-                    console.log("退出房间失败");
+                    //console.log("退出房间失败");
                     return
                 }
                 if (roomDetails.attribution == roomDetails.leave) {
-                    console.log("房间拥有者主动退出房间 socketId:", roomDetails.leave, " roomId:", roomDetails.roomId)
+                    //console.log("房间拥有者主动退出房间 socketId:", roomDetails.leave, " roomId:", roomDetails.roomId)
                     this.delRoomProcess(roomDetails)
                 } else {
-                    console.log("其他成员主动退出房间 socketId:", roomDetails.leave, " roomId:", roomDetails.roomId)
+                    //console.log("其他成员主动退出房间 socketId:", roomDetails.leave, " roomId:", roomDetails.roomId)
                 }
             })
         })
@@ -209,19 +210,19 @@ class ClientSocketServiceImpl implements ClientSocketService {
                 const screen = response.data!.screen
                 //todo  测试打开
                 // if (screen.socketId == this.socket?.id) {
-                //     console.log("收到自己发出的消息，忽略掉")
+                //     //console.log("收到自己发出的消息，忽略掉")
                 //     return
                 // }
-                console.log("收到共享屏幕消息", Events.SCREEN, "=>", response);
+                //console.log("收到共享屏幕消息", Events.SCREEN, "=>", response);
                 this.addScreenCache(response.data!.rooms!, screen)
             })
         })
         this.subscribe(Events.DISCONNECT, (data: any) => {
-            console.log("#socket client:", Events.DISCONNECT, "=>", data);
+            //console.log("#socket client:", Events.DISCONNECT, "=>", data);
             screenService.suspend()
         })
         this.subscribe(Events.ERROR, (data: any) => {
-            console.log("subscribe#socket client:", Events.ERROR, "=>", data);
+            //console.log("subscribe#socket client:", Events.ERROR, "=>", data);
         })
     }
 

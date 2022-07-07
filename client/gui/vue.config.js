@@ -1,7 +1,20 @@
 const {defineConfig} = require('@vue/cli-service')
 const port = process.env.port || process.env.npm_config_port || 8080 // dev port
+const webpack = require('webpack')
 
 module.exports = defineConfig({
+  configureWebpack: {
+    plugins: [
+      new webpack.ProvidePlugin({
+        Buffer: ['buffer', 'Buffer']
+      })
+    ],
+    // resolve: {
+    //   fallback: {
+    //     "fs": false
+    //   },
+    // },
+  },
   publicPath: '/',
   outputDir: 'dist',
   assetsDir: 'static',

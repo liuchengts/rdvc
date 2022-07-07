@@ -2,7 +2,8 @@
 import express from 'express';
 import {desktopService, screenService} from "../desktop/screenshot";
 import {clientSocketService} from "../socket/client";
-import {Response, ScreenBase64} from "../../../../common/data";
+import {Response, Screen, ScreenBase64} from "../../../../common/data";
+import fs from "fs";
 
 export let router = express.Router();
 
@@ -44,15 +45,14 @@ router.get('/pull_desktop/:roomId', function (req, res) {
     const screen = clientSocketService.shiftScreenCache(req.params.roomId)
     let data: any
     if (screen != null) {
-        console.log("base64:", screen.imgBuffer.toString("base64"))
-        console.log("base64 test:", Buffer.from("test").toString("base64"))
-        data = new ScreenBase64(screen.socketId, screen.imgBuffer.toString("base64"), screen.quality, screen.extension, screen.width, screen.height)
+        data = new ScreenBase64(screen.socketId, Buffer.from(screen.imgBuffer).toString('base64'),
+            screen.quality, screen.extension, screen.width, screen.height)
     }
     console.log("pull_desktop=>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>:", data, req.params.roomId)
     resJson(res, data)
 });
 
-//GET home page.
+//GET home page.s
 router.get('/', function (req, res) {
     // res.header("Access-Control-Allow-Headers", "content-type");
     res.render('index', {

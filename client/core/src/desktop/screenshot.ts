@@ -4,6 +4,7 @@ import {compressionService} from "../common/images";
 import screenshotDesktop from "screenshot-desktop";
 import {DesktopScreen, Response, Screen} from "../../../../common/data";
 import {Events} from "../../../../common/events";
+import * as fs from "fs";
 
 
 /**
@@ -171,8 +172,22 @@ class DesktopServiceImpl implements DesktopService {
         let buffer = Buffer.from(promise.binary.buffer)
         console.log("压缩后的图片大小:", buffer.length / 1024, "kb")
         let extension = promise.extension
+        // this.testFile(extension, buffer)
         let screen = new Screen(this.socketId!, buffer, quality, extension, width, height)
         this.desktops.push(new DesktopScreen(this.rooms, screen, new Date()))
+    }
+
+    testFile(extension: string, buffer: Buffer) {
+        let url = "/Users/liucheng/it/lc/rdvc/tmp/" + Math.floor(Date.now() / 1000) + "-desktop." + extension
+        fs.writeFile(url, buffer, err => {
+            if (err) {
+                console.error(err)
+                return
+            } else {
+                console.log("写入成功 url:", url)
+            }
+
+        })
     }
 
     getNextDesktopScreen(): DesktopScreen | undefined {
