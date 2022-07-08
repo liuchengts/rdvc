@@ -16,3 +16,10 @@ npm install -g express screenshot-desktop socket.io-client @squoosh/lib
 
 更改文件
 cp ./build/client/core/src/desktop/index.js  node_modules/screenshot-desktop/lib/win32/index.js
+
+
+"targets": [
+"node16-macos-x64",
+"node16-win-x64",
+"node12-linux"
+],
