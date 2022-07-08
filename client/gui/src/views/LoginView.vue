@@ -91,7 +91,7 @@ export default defineComponent({
       })
     },
     pullDesktop() {
-      const canvas = createCanvas(1000, 1000)
+      const canvas = createCanvas(1800, 1000)
       const ctx = canvas.getContext('2d')
       this.timer = Number(setInterval(() => {
         desktopService.pullDesktop(this.$data.roomId, (promise: Promise<Response<ScreenBase64>>) => {
@@ -99,7 +99,7 @@ export default defineComponent({
             console.log("Screen aResponse:", aResponse)
             let url = `data:image/${aResponse.data!.extension};base64,${aResponse.data!.imgBufferBase64}`
             loadImage(url).then((image) => {
-              ctx.drawImage(image, 50, 0, 800, 800)
+              ctx.drawImage(image, 50, 0, 1000, 800)
               this.$data.imgUrl = canvas.toDataURL()
             })
             // this.$data.imgUrl = "data:image/jpg;base64," + aResponse.data?.imgBufferBase64
