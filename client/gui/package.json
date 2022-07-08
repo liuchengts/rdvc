@@ -10,6 +10,7 @@
   "dependencies": {
     "axios": "^0.26.1",
     "bufferutil": "^4.0.6",
+    "canvas": "^2.9.3",
     "core-js": "^3.8.3",
     "socket.io-client": "^4.5.1",
     "ts-md5": "^1.2.11",

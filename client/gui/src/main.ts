@@ -7,7 +7,7 @@ import 'element-plus/dist/index.css'
 import {clientSocket} from "@/ts/socket/ClientIo";
 
 createApp(App)
-  .use(clientSocket)
+  // .use(clientSocket)
   .use(store)
   .use(router)
   .use(ElementPlus)

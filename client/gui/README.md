@@ -31,4 +31,9 @@ cd khl-web
 npm run serve
 npm run build
 
+
+
+
+npm install -g node-gyp
+
 ```

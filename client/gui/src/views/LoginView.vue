@@ -19,24 +19,27 @@
         <el-button type="primary" @click="desktopContinued">恢复</el-button>
       </el-col>
     </el-row>
+    <el-button type="primary" @click="test">test</el-button>
     <div id="content">
-      <!--      <img :src="'data:image/png;base64,'+imgUrl" alt=""></div>-->
-
-      <img :src="imgUrl" alt=""></div>
-
+      <img :src="imgUrl" alt="" style="width: 200px;height: 200px">
+    </div>
   </div>
+
 </template>
 <script lang="ts">
 import {defineComponent} from 'vue'
 import {desktopService} from "@/ts/desktop"
 import {ScreenBase64, Response} from "../../../../common/data";
+import {createCanvas, loadImage} from "canvas";
 
 export default defineComponent({
   name: "LoginView",
   data() {
     return {
       roomId: "",
+      listImg: ["images/1.jpg", "images/2.jpg", "images/3.jpg"],
       imgUrl: "",
+      variableImgUrl: "",
       timer: 0
     }
   },
@@ -52,6 +55,43 @@ export default defineComponent({
   //   }
   // },
   methods: {
+    test() {
+      const canvas = createCanvas(200, 200)
+      const ctx = canvas.getContext('2d')
+      // // Write "Awesome!"
+      // ctx.font = '30px Impact'
+      // ctx.rotate(0.1)
+      // ctx.fillText('Awesome!', 50, 100)
+      //
+      // // Draw line under text
+      // let text = ctx.measureText('Awesome!')
+      // ctx.strokeStyle = 'rgba(0,0,0,0.5)'
+      // ctx.beginPath()
+      // ctx.lineTo(50, 102)
+      // ctx.lineTo(50 + text.width, 102)
+      // ctx.stroke()
+      for (let i in this.listImg) {
+        let url = this.listImg[i]
+        console.log("url:", url)
+        loadImage(url).then((image) => {
+          ctx.drawImage(image, 50, 0, 70, 70)
+          this.$data.imgUrl = canvas.toDataURL()
+        })
+      }
+      let index=0
+      setInterval(() => {
+        if (index==3){
+          index=0
+        }else {
+          index=index+1
+        }
+
+        loadImage(this.variableImgUrl).then((image) => {
+          ctx.drawImage(image, 50, 0, 70, 70)
+          this.$data.imgUrl = canvas.toDataURL()
+        })
+      }, 100)
+    },
     desktopInit() {
       desktopService.desktopInit()
     },
@@ -69,17 +109,17 @@ export default defineComponent({
       })
     },
     pullDesktop() {
-      this.timer = Number(setInterval(() => {
-        desktopService.pullDesktop(this.$data.roomId, (promise: Promise<Response<ScreenBase64>>) => {
-          promise.then(aResponse => {
-            console.log("Screen aResponse:", aResponse)
-            this.$data.imgUrl = "data:image/jpg;base64," + aResponse.data?.imgBufferBase64
-          }).catch(aResponse => {
-            // 失败的处理函数
-            console.log(aResponse)
-          })
-        })
-      }, 1000))
+      // this.timer = Number(setInterval(() => {
+      //   desktopService.pullDesktop(this.$data.roomId, (promise: Promise<Response<ScreenBase64>>) => {
+      //     promise.then(aResponse => {
+      //       console.log("Screen aResponse:", aResponse)
+      //       this.$data.imgUrl = "data:image/jpg;base64," + aResponse.data?.imgBufferBase64
+      //     }).catch(aResponse => {
+      //       // 失败的处理函数
+      //       console.log(aResponse)
+      //     })
+      //   })
+      // }, 1000))
     }
   }
 })
