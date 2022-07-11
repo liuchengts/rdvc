@@ -191,7 +191,7 @@ class DesktopServiceImpl implements DesktopService {
     }
 
     getNextDesktopScreen(): DesktopScreen | undefined {
-        return this.desktops.pop()
+        return this.desktops.shift()
     }
 
     push() {
