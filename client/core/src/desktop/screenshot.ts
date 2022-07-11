@@ -10,7 +10,7 @@ import * as fs from "fs";
 /**
  * 截取屏幕的定时，单位ms
  */
-const SCREENSHOT_INTERVAL = 1000*0.5;
+const SCREENSHOT_INTERVAL = 1000;
 
 class ScreenService {
     /**
@@ -27,7 +27,7 @@ class ScreenService {
             .then(img => {
                 return img;
             }).catch(err => {
-                console.log('截屏失败', err);
+                //console.log('截屏失败', err);
                 return err;
             })
     }
@@ -40,10 +40,10 @@ class ScreenService {
         let time = new Date();
         if (this.isSuspend()) {
             if (this.indexSuspend > 0) return
-            console.log("截屏暂停[", this.indexSuspend, "]", time)
+            //console.log("截屏暂停[", this.indexSuspend, "]", time)
             this.indexSuspend++
         } else {
-            console.log("我开始截屏了", time)
+            //console.log("我开始截屏了", time)
             this.createScreenshot().then((img): void => {
                 callback(img);
             })
@@ -61,7 +61,7 @@ class ScreenService {
         if (!desktopService.isTask()) return;
         if (this.isSuspend()) return
         this.suspendFag = true;
-        console.log("截屏任务暂停")
+        //console.log("截屏任务暂停")
     }
 
     /**
@@ -71,7 +71,7 @@ class ScreenService {
         if (!desktopService.isTask()) return;
         if (!this.isSuspend()) return
         this.suspendFag = false;
-        console.log("截屏任务继续开始")
+        //console.log("截屏任务继续开始")
     }
 
 }
@@ -151,7 +151,7 @@ class DesktopServiceImpl implements DesktopService {
 
     addRooms(roomId: string) {
         if (this.rooms.length >= this.roomsMax) {
-            console.warn("rooms超过上限,放弃本次增加 roomId:", roomId)
+            //console.warn("rooms超过上限,放弃本次增加 roomId:", roomId)
             return
         }
         this.rooms.push(roomId)
@@ -165,25 +165,29 @@ class DesktopServiceImpl implements DesktopService {
 
     async storage(imgBuffer: Buffer, quality?: number, width?: number, height?: number) {
         if (quality == null) quality = this.quality
-        console.log("压缩前的图片大小:", imgBuffer.length / 1024, "kb")
+        //console.log("压缩前的图片大小:", imgBuffer.length / 1024, "kb")
         //将图片编码压缩 imgStr
+        let test_start = Date.now()
         let promise = await compressionService.compImg(imgBuffer, quality, width, height)
+        console.log("压缩完成",Date.now()-test_start)
+        test_start = Date.now()
         let buffer = Buffer.from(promise.binary.buffer)
-        console.log("压缩后的图片大小:", calculatedLength(buffer))
+        //console.log("压缩后的图片大小:", calculatedLength(buffer))
         let extension = promise.extension
         // this.testFile(extension, buffer)
         let screen = new Screen(this.socketId!, buffer, quality, extension, width, height)
         this.desktops.push(new DesktopScreen(this.rooms, screen, new Date()))
+        console.log("放入缓存完成",Date.now()-test_start)
     }
 
     testFile(extension: string, buffer: Buffer) {
         let url = "/Users/liucheng/it/lc/rdvc/tmp/" + Math.floor(Date.now() / 1000) + "-desktop." + extension
         fs.writeFile(url, buffer, err => {
             if (err) {
-                console.error(err)
+                //console.error(err)
                 return
             } else {
-                console.log("写入成功 url:", url)
+                //console.log("写入成功 url:", url)
             }
 
         })
@@ -194,21 +198,24 @@ class DesktopServiceImpl implements DesktopService {
     }
 
     push() {
+        let test_start = Date.now()
         let desktopScreen = this.getNextDesktopScreen()
         if (desktopScreen == undefined) {
-            console.warn("没有要推送的数据")
+            //console.warn("没有要推送的数据")
             return
         }
-        if (desktopScreen.rooms.length <= 0) {
-            console.warn("没有要接收的rooms")
-            return
-        }
+        //todo test
+        // if (desktopScreen.rooms.length <= 0) {
+        //     //console.warn("没有要接收的rooms")
+        //     return
+        // }
         clientSocketService.replyToServer(Events.SCREEN, new Response(true, desktopScreen))
+        console.log("推送完成",Date.now()-test_start)
     }
 
     setSocketId(socketId?: string) {
         if (socketId == null) {
-            console.error("没有 socketId 不启动 desktop ")
+            //console.error("没有 socketId 不启动 desktop ")
             return
         }
         this.socketId = socketId
@@ -216,30 +223,34 @@ class DesktopServiceImpl implements DesktopService {
 
     desktopInit() {
         if (this.isTask()) {
-            console.error("desktop 任务已启动")
+            //console.error("desktop 任务已启动")
             return
         }
         this.task = true
         setInterval((): void => {
-            if (screenService.isSuspend()) return;
-            if (this.socketId == undefined) {
-                console.warn("没有 socketId")
-                screenService.suspend()
-                return
-            }
-            if (this.rooms.length <= 0) {
-                console.warn("没有要接收的rooms")
-                screenService.suspend()
-                return
-            }
-            if (this.desktops.length >= this.desktopsMax) {
-                console.warn("desktops超过上限,放弃本次增加:", new Date())
-                screenService.suspend()
-                return
-            }
+            //todo test
+            // if (screenService.isSuspend()) return;
+            // if (this.socketId == undefined) {
+            //     //console.warn("没有 socketId")
+            //     screenService.suspend()
+            //     return
+            // }
+            // if (this.rooms.length <= 0) {
+            //     //console.warn("没有要接收的rooms")
+            //     screenService.suspend()
+            //     return
+            // }
+            // if (this.desktops.length >= this.desktopsMax) {
+            //     //console.warn("desktops超过上限,放弃本次增加:", new Date())
+            //     screenService.suspend()
+            //     return
+            // }
+            let test_start = Date.now()
+            console.log("开始截屏", test_start)
             screenService.startScreenshotTimer(((imgBuffer: Buffer): void => {
+                console.log("截屏完成",Date.now()-test_start)
                 this.storage(imgBuffer).then(() => {
-                    console.log("压缩存储成功")
+                    //console.log("压缩存储成功")
                     this.push()
                 })
             }))
@@ -251,6 +262,4 @@ class DesktopServiceImpl implements DesktopService {
 
 export const screenService = new ScreenService()
 export const desktopService = new DesktopServiceImpl()
-
-
 
