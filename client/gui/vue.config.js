@@ -31,8 +31,8 @@ module.exports = defineConfig({
     https: false,
     proxy: {
       [process.env.VUE_APP_BASE_API]: {
-        target: "http://localhost:3001",
-        // target: "http://192.168.50.79:3001",
+        // target: "http://localhost:3001",
+        target: "http://192.168.50.79:3001",
         changeOrigin: true,
         ws: false,
         secure: false,
