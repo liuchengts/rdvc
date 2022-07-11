@@ -97,7 +97,8 @@ export default defineComponent({
         desktopService.pullDesktop(this.$data.roomId, (promise: Promise<Response<ScreenBase64>>) => {
           promise.then(aResponse => {
             console.log("Screen aResponse:", aResponse)
-            let url = `data:image/${aResponse.data!.extension};base64,${aResponse.data!.imgBufferBase64}`
+            if (aResponse.data==null) return
+            let url = `data:image/${aResponse.data.extension};base64,${aResponse.data.imgBufferBase64}`
             loadImage(url).then((image) => {
               ctx.drawImage(image, 50, 0, 1000, 800)
               this.$data.imgUrl = canvas.toDataURL()

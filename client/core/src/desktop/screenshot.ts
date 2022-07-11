@@ -2,7 +2,7 @@ import {clientSocketService} from "../socket/client";
 import {compressionService} from "../common/images";
 // @ts-ignore
 import screenshotDesktop from "screenshot-desktop";
-import {DesktopScreen, Response, Screen} from "../../../../common/data";
+import {calculatedLength, DesktopScreen, Response, Screen} from "../../../../common/data";
 import {Events} from "../../../../common/events";
 import * as fs from "fs";
 
@@ -170,7 +170,7 @@ class DesktopServiceImpl implements DesktopService {
         let promise = await compressionService.compImg(imgBuffer, quality, width, height)
         //todo  针对promise.binary.buffer 做测试，确定img base64转换正确
         let buffer = Buffer.from(promise.binary.buffer)
-        console.log("压缩后的图片大小:", buffer.length / 1024, "kb")
+        console.log("压缩后的图片大小:", calculatedLength(buffer))
         let extension = promise.extension
         // this.testFile(extension, buffer)
         let screen = new Screen(this.socketId!, buffer, quality, extension, width, height)
