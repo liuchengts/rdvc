@@ -10,7 +10,7 @@ import * as fs from "fs";
 /**
  * 截取屏幕的定时，单位ms
  */
-const SCREENSHOT_INTERVAL = 1000;
+const SCREENSHOT_INTERVAL = 1000*0.5;
 
 class ScreenService {
     /**
@@ -168,7 +168,6 @@ class DesktopServiceImpl implements DesktopService {
         console.log("压缩前的图片大小:", imgBuffer.length / 1024, "kb")
         //将图片编码压缩 imgStr
         let promise = await compressionService.compImg(imgBuffer, quality, width, height)
-        //todo  针对promise.binary.buffer 做测试，确定img base64转换正确
         let buffer = Buffer.from(promise.binary.buffer)
         console.log("压缩后的图片大小:", calculatedLength(buffer))
         let extension = promise.extension

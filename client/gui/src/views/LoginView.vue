@@ -87,7 +87,7 @@ export default defineComponent({
     },
     applyJoinRoom() {
       desktopService.applyJoinRoom(this.$data.roomId, () => {
-        this.pullDesktop()
+        // this.pullDesktop()
       })
     },
     pullDesktop() {
