@@ -1,11 +1,15 @@
 const {defineConfig} = require('@vue/cli-service')
 const port = process.env.port || process.env.npm_config_port || 8080 // dev port
 const webpack = require('webpack')
-
+const NodePolyfillPlugin = require("node-polyfill-webpack-plugin");
 module.exports = defineConfig({
+  chainWebpack: (config) => {
+    config.plugin("polyfills").use(NodePolyfillPlugin);
+  },
   configureWebpack: {
     plugins: [
       new webpack.ProvidePlugin({
+        process: 'process/browser',
         Buffer: ['buffer', 'Buffer']
       })
     ],

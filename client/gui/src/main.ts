@@ -4,7 +4,8 @@ import router from './router'
 import store from './store'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
-import {clientSocket} from "@/ts/socket/ClientIo";
+// import {clientSocket} from "@/ts/socket/ClientIo";
+import {clientSocketService} from "@/ts/socket/client";
 
 createApp(App)
   // .use(clientSocket)
@@ -12,3 +13,7 @@ createApp(App)
   .use(router)
   .use(ElementPlus)
   .mount('#app')
+
+const SOCKET_PROT = 8000
+const connection = "http://localhost:" + SOCKET_PROT
+clientSocketService.init(connection);

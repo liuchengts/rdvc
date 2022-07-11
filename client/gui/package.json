@@ -12,11 +12,11 @@
     "bufferutil": "^4.0.6",
     "canvas": "^2.9.3",
     "core-js": "^3.8.3",
+    "node-polyfill-webpack-plugin": "^1.1.4",
     "socket.io-client": "^4.5.1",
     "ts-md5": "^1.2.11",
     "utf-8-validate": "^5.0.9",
     "vue": "^3.2.13",
-    "vue-3-socket.io": "^1.0.5",
     "vue-router": "^4.0.3",
     "vue3-cookies": "^1.0.6",
     "vuex": "^4.0.0"

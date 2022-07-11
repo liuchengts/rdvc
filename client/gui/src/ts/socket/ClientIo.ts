@@ -1,4 +1,4 @@
-import VueSocketIO from 'vue-3-socket.io';
+import VueSocketIO from 'vue-socket.io';
 import SocketIO from "socket.io-client";
 
 const client_socket_prot = 8000

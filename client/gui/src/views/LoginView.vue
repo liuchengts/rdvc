@@ -29,50 +29,48 @@
 <script lang="ts">
 import {defineComponent} from 'vue'
 import {desktopService} from "@/ts/desktop"
-import {ScreenBase64, Response} from "../../../../common/data";
+import {ScreenBase64, Response, DesktopScreen} from "../../../../common/data";
 import {createCanvas, loadImage} from "canvas";
+import {Buffer} from "buffer"
+import {clientSocketService} from "@/ts/socket/client";
 
 export default defineComponent({
   name: "LoginView",
   data() {
     return {
       roomId: "",
-      listImg: ["images/1.jpg", "images/2.jpg", "images/3.jpg"],
       imgUrl: "",
-      variableImgUrl: "",
       timer: 0,
-      timer2: 0,
     }
   },
   // sockets: {
-  //   connect() {
-  //     console.log('socket connected')
-  //     this.$socket.subscribe("kebab-case", function(data) {
-  //       console.log("This event was fired by eg. sio.emit('kebab-case')", data)
-  //     })
+  //   connect: function (data: any) {
+  //     console.log('connect', data)
   //   },
-  //   customEmit(data) {
-  //     console.log('this method was fired by the socket server. eg: io.emit("customEmit", data)')
-  //   }
+  //   disconnect: function (data: any) {
+  //     console.log('disconnect', data)
+  //   },
+  //   reconnect: function (data: any) {
+  //     console.log('reconnect', data)
+  //   },
   // },
+  mounted() {
+
+  },
   methods: {
     test() {
-      // clearInterval(this.timer2)
-      let index = 0
-      this.timer = Number(setInterval(() => {
-        const canvas = createCanvas(1000, 1000)
-        const ctx = canvas.getContext('2d')
-        if (index == 3) {
-          index = 0
-        } else {
-          index = index + 1
-        }
-        let url = this.listImg[index]
+      const canvas = createCanvas(1800, 1000)
+      const ctx = canvas.getContext('2d')
+      clientSocketService.screen((aResponse: Response<DesktopScreen>) => {
+        console.log("Screen aResponse:", aResponse)
+        const screen = aResponse.data!.screen!
+        let imgBufferBase64 = Buffer.from(screen.imgBuffer).toString("base64")
+        let url = `data:image/${screen!.extension!!};base64,${imgBufferBase64}`
         loadImage(url).then((image) => {
-          ctx.drawImage(image, 50, 0, 800, 800)
+          ctx.drawImage(image, 50, 0, 1000, 800)
           this.$data.imgUrl = canvas.toDataURL()
         })
-      }, 1000))
+      })
     },
     desktopInit() {
       desktopService.desktopInit()
