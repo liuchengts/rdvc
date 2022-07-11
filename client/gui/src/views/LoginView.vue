@@ -59,16 +59,18 @@ export default defineComponent({
   },
   methods: {
     test() {
-      const canvas = createCanvas(1800, 1000)
-      const ctx = canvas.getContext('2d')
-      clientSocketService.screen((aResponse: Response<DesktopScreen>) => {
-        console.log("Screen aResponse:", aResponse)
-        const screen = aResponse.data!.screen!
-        let imgBufferBase64 = Buffer.from(screen.imgBuffer).toString("base64")
-        let url = `data:image/${screen!.extension!!};base64,${imgBufferBase64}`
-        loadImage(url).then((image) => {
-          ctx.drawImage(image, 50, 0, 1000, 800)
-          this.$data.imgUrl = canvas.toDataURL()
+      clientSocketService.joinRoom(this.$data.roomId, () => {
+        const canvas = createCanvas(1800, 1000)
+        const ctx = canvas.getContext('2d')
+        clientSocketService.screen((aResponse: Response<DesktopScreen>) => {
+          console.log("Screen aResponse:", aResponse)
+          const screen = aResponse.data!.screen!
+          let imgBufferBase64 = Buffer.from(screen.imgBuffer).toString("base64")
+          let url = `data:image/${screen!.extension!!};base64,${imgBufferBase64}`
+          loadImage(url).then((image) => {
+            ctx.drawImage(image, 50, 0, 1000, 800)
+            this.$data.imgUrl = canvas.toDataURL()
+          })
         })
       })
     },
