@@ -25,8 +25,8 @@ class CompressionServiceImpl implements CompressionService {
     /**
      * 接受压缩图像的管道，如果关闭，将无法再调用 ingestImage 传递图像
      */
-        // private imagePool = new ImagePool(cpus().length);
-    private imagePool = new ImagePool(1);
+        private imagePool = new ImagePool(cpus().length);
+    // private imagePool = new ImagePool(1);
 
     async compImg(input: Buffer, quality: number, width?: number, height?: number): Promise<EncodeResult> {
         let image = this.imagePool.ingestImage(input.buffer);
