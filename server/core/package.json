@@ -2,11 +2,24 @@
   "name": "rdvc-server-core",
   "version": "0.0.0",
   "private": true,
+  "bin": "./build/server/core/src/index.js",
   "scripts": {
     "dev": "set DEBUG=express:* & nodemon src/index.ts",
     "build": "tsc",
-    "prod": "tsc & node ./build/server/core/src/index.js",
-    "pkg": "tsc & pkg -t  node16-macos-x64 ./build/server/core/src/index.js --output=rdvc-server-core"
+    "prod": "node ./build/server/core/src/index.js",
+    "pkg": "pkg . --output=bin/rdvc-server-core"
+  },
+  "pkg": {
+    "assets": [
+      "views/**/*"
+    ],
+    "scripts": "./build/server/core/src/index.js",
+    "targets": [
+      "node16-macos-x64",
+      "node16-win-x64",
+      "node12-linux"
+    ],
+    "outputPath": "dist"
   },
   "dependencies": {
     "express": "^4.16.1",

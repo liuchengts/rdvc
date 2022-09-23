@@ -16,7 +16,7 @@
     "src/**/*.ts",
     "src/**/*.tsx",
     "../../common/*.tsx",
-    "../../common/*.ts",
+    "../../common/*.ts"
   ],
   "exclude": [
     "node_modules"
