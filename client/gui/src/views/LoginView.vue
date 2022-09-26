@@ -60,7 +60,7 @@ export default defineComponent({
   methods: {
     test() {
       clientSocketService.joinRoom(this.$data.roomId, () => {
-        const canvas = createCanvas(1800, 1000)
+        const canvas = createCanvas(2000, 2000)
         const ctx = canvas.getContext('2d')
         clientSocketService.screen((aResponse: Response<DesktopScreen>) => {
           console.log("Screen aResponse:", aResponse)
@@ -68,8 +68,10 @@ export default defineComponent({
           let imgBufferBase64 = Buffer.from(screen.imgBuffer).toString("base64")
           let url = `data:image/${screen!.extension!!};base64,${imgBufferBase64}`
           loadImage(url).then((image) => {
+            ctx.save()
             ctx.drawImage(image, 50, 0, 1780, 1080)
             this.$data.imgUrl = canvas.toDataURL()
+            ctx.restore()
           })
         })
       })
