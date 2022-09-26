@@ -27,7 +27,7 @@ class ScreenService {
             .then(img => {
                 return img;
             }).catch(err => {
-                //console.log('截屏失败', err);
+                console.log('截屏失败', err);
                 return err;
             })
     }
@@ -40,10 +40,10 @@ class ScreenService {
         let time = new Date();
         if (this.isSuspend()) {
             if (this.indexSuspend > 0) return
-            //console.log("截屏暂停[", this.indexSuspend, "]", time)
+            console.log("截屏暂停[", this.indexSuspend, "]", time)
             this.indexSuspend++
         } else {
-            //console.log("我开始截屏了", time)
+            console.log("我开始截屏了", time)
             this.createScreenshot().then((img): void => {
                 callback(img);
             })
@@ -61,7 +61,7 @@ class ScreenService {
         if (!desktopService.isTask()) return;
         if (this.isSuspend()) return
         this.suspendFag = true;
-        //console.log("截屏任务暂停")
+        console.log("截屏任务暂停")
     }
 
     /**
@@ -71,7 +71,7 @@ class ScreenService {
         if (!desktopService.isTask()) return;
         if (!this.isSuspend()) return
         this.suspendFag = false;
-        //console.log("截屏任务继续开始")
+        console.log("截屏任务继续开始")
     }
 
 }
@@ -143,7 +143,7 @@ class DesktopServiceImpl implements DesktopService {
     /**
      * 设置默认的压缩比
      */
-    private quality = 15;
+    private quality = 25;
 
     isTask(): boolean {
         return this.task
@@ -151,7 +151,7 @@ class DesktopServiceImpl implements DesktopService {
 
     addRooms(roomId: string) {
         if (this.rooms.length >= this.roomsMax) {
-            //console.warn("rooms超过上限,放弃本次增加 roomId:", roomId)
+            console.warn("rooms超过上限,放弃本次增加 roomId:", roomId)
             return
         }
         this.rooms.push(roomId)
@@ -216,11 +216,11 @@ class DesktopServiceImpl implements DesktopService {
     push() {
         let desktopScreen = this.getNextDesktopScreen()
         if (desktopScreen == undefined) {
-            //console.warn("没有要推送的数据")
+            console.warn("没有要推送的数据")
             return
         }
         if (desktopScreen.rooms.length <= 0) {
-            //console.warn("没有要接收的rooms")
+            console.warn("没有要接收的rooms")
             return
         }
         clientSocketService.replyToServer(Events.SCREEN, new Response(true, desktopScreen))
@@ -228,7 +228,7 @@ class DesktopServiceImpl implements DesktopService {
 
     setSocketId(socketId?: string) {
         if (socketId == null) {
-            //console.error("没有 socketId 不启动 desktop ")
+            console.error("没有 socketId 不启动 desktop ")
             return
         }
         this.socketId = socketId
@@ -236,7 +236,7 @@ class DesktopServiceImpl implements DesktopService {
 
     desktopInit() {
         if (this.isTask()) {
-            //console.error("desktop 任务已启动")
+            console.error("desktop 任务已启动")
             return
         }
         this.task = true
@@ -244,17 +244,17 @@ class DesktopServiceImpl implements DesktopService {
             //todo test
             if (screenService.isSuspend()) return;
             if (this.socketId == undefined) {
-                //console.warn("没有 socketId")
+                console.warn("没有 socketId")
                 screenService.suspend()
                 return
             }
             if (this.rooms.length <= 0) {
-                //console.warn("没有要接收的rooms")
+                console.warn("没有要接收的rooms")
                 screenService.suspend()
                 return
             }
             if (this.desktops.length >= this.desktopsMax) {
-                //console.warn("desktops超过上限,放弃本次增加:", new Date())
+                console.warn("desktops超过上限,放弃本次增加:", new Date())
                 screenService.suspend()
                 return
             }

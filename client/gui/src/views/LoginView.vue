@@ -68,7 +68,7 @@ export default defineComponent({
           let imgBufferBase64 = Buffer.from(screen.imgBuffer).toString("base64")
           let url = `data:image/${screen!.extension!!};base64,${imgBufferBase64}`
           loadImage(url).then((image) => {
-            ctx.drawImage(image, 50, 0, 1000, 800)
+            ctx.drawImage(image, 50, 0, 1780, 1080)
             this.$data.imgUrl = canvas.toDataURL()
           })
         })

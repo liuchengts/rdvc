@@ -77,6 +77,9 @@ export class RoomsServiceImpl implements RoomsService {
                 serverSocketService.pushToClient(roomId, Events.LEAVE_ROOM, new Response<RoomDetails>(true, roomDetails))
             }
         }
+        if (this.roomAttribution.size <= 0) {
+            serverSocketService.pushToClient(socketId, Events.DESKTOP_STOP, new Response<void>(true))
+        }
         this.socket?.in(socketId).socketsLeave(roomId)
     }
 

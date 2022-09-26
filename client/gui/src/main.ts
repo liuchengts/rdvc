@@ -15,5 +15,7 @@ createApp(App)
   .mount('#app')
 
 const SOCKET_PROT = 8000
-const connection = "http://localhost:" + SOCKET_PROT
+//server 地址
+// const connection = "http://localhost:" + SOCKET_PROT
+const connection = "http://10.30.70.14:" + SOCKET_PROT
 clientSocketService.init(connection);
