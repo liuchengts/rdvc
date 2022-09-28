@@ -10,8 +10,10 @@
 - `client`端
     - `client core`：用于实时获取屏幕的画面并进行编码压缩，通过网络传输到`server`端
     - `clenet gui`：用于处理显示`server`端传输过来的屏幕画面
-- `server`端：处理`client core`的数据并转发到`clenet gui`
-
+- `server`端：
+  - `server core`：处理`client core`的数据并提供`clenet gui`直连数据推送
+  - `server gui`：用于管理所有的`client core`与`clenet gui`
+  
 ### 三、需要处理的问题
 - 画面捕获（截屏图片、推视频流）
     - 截屏图片的方式具有明显的延迟，在牺牲图片显示画质的情况下可以提升画面流畅度
