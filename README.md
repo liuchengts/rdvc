@@ -60,3 +60,29 @@
     - `canvas`的性能不足以支撑`1s`内多个画面帧的绘制
     - 可能的替代方案是`ffmpeg`
 - 需要补充设计一套控制模型
+
+说实话，这个`demo`写完让我挺失望的，没什么好写的了，后面替换为推流再整一版，当前项目地址 [rdvc](https://github.com/liuchengts/rdvc)
+
+### 五、使用
+- `server core`端
+  - `cd rdvc/server/core`
+  - `npm install`
+  - `npm run build`
+  - `npm run pkg`
+  - 更多命令参见`package.json`
+
+- `clenet core`端
+  - `cd rdvc/clenet/core`
+  - 必须更改`src/index.ts`第`24`行，`ip`地址为`server core`端的地址
+  - `npm install`
+  - `npm run build`
+  - `npm run pkg`
+  - 更多命令参见`package.json`
+
+- `clenet gui`端
+  - `cd rdvc/clenet/gui`
+  - 必须更改`src/main.ts`第`20`行，`ip`地址为`server core`端的地址（向服务器注册并推送数据到本地）
+  - 可选更改`vue.config.js`第`37`行，`ip`地址为`clenet core`端的地址（主动找客户端拉数据到本地）
+  - `npm install`
+  - `npm run build`
+  - 更多命令参见`package.json`
