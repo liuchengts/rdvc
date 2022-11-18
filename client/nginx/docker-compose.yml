@@ -1,0 +1,9 @@
+nginx-rtmp:
+  container_name: nginx-rtmp
+  build: docker
+  restart: always
+  ports:
+    - "81:81"
+    - "1935:1935"
+  environment:
+      TZ : "Asia/Shanghai"
