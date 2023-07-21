@@ -5,21 +5,26 @@
         <el-input v-model="roomId"></el-input>
       </el-col>
     </el-row>
-    <el-row>
-      <el-col :span="2">
-        <el-button type="primary" @click="applyJoinRoom">加入房间</el-button>
-      </el-col>
-      <el-col :span="2">
-        <el-button type="primary" @click="desktopInit">开始</el-button>
-      </el-col>
-      <el-col :span="2">
-        <el-button type="primary" @click="desktopSuspend">暂停</el-button>
-      </el-col>
-      <el-col :span="2">
-        <el-button type="primary" @click="desktopContinued">恢复</el-button>
-      </el-col>
-    </el-row>
-    <el-button type="primary" @click="test">test</el-button>
+    <!--    <el-row>-->
+    <!--      <el-col :span="2">-->
+    <!--        <el-button type="primary" @click="applyJoinRoom">加入房间</el-button>-->
+    <!--      </el-col>-->
+    <!--      <el-col :span="2">-->
+    <!--        <el-button type="primary" @click="desktopInit">开始</el-button>-->
+    <!--      </el-col>-->
+    <!--      <el-col :span="2">-->
+    <!--        <el-button type="primary" @click="desktopSuspend">暂停</el-button>-->
+    <!--      </el-col>-->
+    <!--      <el-col :span="2">-->
+    <!--        <el-button type="primary" @click="desktopContinued">恢复</el-button>-->
+    <!--      </el-col>-->
+    <!--    </el-row>-->
+    <p>localVideo</p>
+    <video id="localVideo" autoplay playsinline controls="false"></video>
+    <p>acceptVideo</p>
+<!--    <video id="acceptVideo" autoplay playsinline muted></video>-->
+    <video id="acceptVideo" autoplay playsinline></video>
+    <el-button type="primary" @click="test2">test</el-button>
     <div id="content">
       <img :src="imgUrl" alt="">
     </div>
@@ -33,6 +38,7 @@ import {ScreenBase64, Response, DesktopScreen} from "../../../../common/data";
 import {createCanvas, loadImage} from "canvas";
 import {Buffer} from "buffer"
 import {clientSocketService} from "@/ts/socket/client";
+import {acceptClient, pushClient, turnServer} from "@/ts/DisplayMedia";
 
 export default defineComponent({
   name: "LoginView",
@@ -55,9 +61,28 @@ export default defineComponent({
   //   },
   // },
   mounted() {
-
+    turnServer()
   },
   methods: {
+    test2() {
+      const constraints = {
+        'video': true,
+        'audio': true
+      }
+      // navigator.mediaDevices.getUserMedia(constraints)
+      navigator.mediaDevices.getDisplayMedia(constraints)
+        .then(stream => {
+          console.log('Got MediaStream:', stream);
+          let videoElement = document.querySelector("#localVideo") as HTMLMediaElement;
+          videoElement!!.srcObject = stream;
+          pushClient(stream)
+          acceptClient(document.querySelector("#acceptVideo")  as HTMLMediaElement)
+        })
+        .catch(error => {
+          console.error('Error accessing media devices.', error);
+        });
+
+    },
     test() {
       clientSocketService.joinRoom(this.$data.roomId, () => {
         const canvas = createCanvas(2000, 2000)
@@ -99,7 +124,7 @@ export default defineComponent({
         desktopService.pullDesktop(this.$data.roomId, (promise: Promise<Response<ScreenBase64>>) => {
           promise.then(aResponse => {
             console.log("Screen aResponse:", aResponse)
-            if (aResponse.data==null) return
+            if (aResponse.data == null) return
             let url = `data:image/${aResponse.data.extension};base64,${aResponse.data.imgBufferBase64}`
             loadImage(url).then((image) => {
               ctx.drawImage(image, 50, 0, 1000, 800)
