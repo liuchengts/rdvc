@@ -4,9 +4,9 @@ export function turnServer() {
   const iceConfiguration = {
     iceServers: [
       {
-        urls: 'turn:39.98.203.31:3478',
-        username: 'clenet',
-        credential: 'clenet123'
+        urls: 'turn:localhost:3478',
+        username: 'a',
+        credential: 'b'
       }
     ]
   }
@@ -35,9 +35,9 @@ export function acceptClient(mediaElement: HTMLMediaElement) {
   const iceConfiguration = {
     iceServers: [
       {
-        urls: 'turn:39.98.203.31:3478',
-        username: 'clenet',
-        credential: 'clenet123'
+        urls: 'turn:localhost:3478',
+        username: 'a',
+        credential: 'b'
       }
     ]
   }
