@@ -1,17 +1,18 @@
-let peerConnection: RTCPeerConnection
 // https://webrtc.org/getting-started/turn-server?hl=zh-cn
-export function turnServer() {
-  const iceConfiguration = {
-    iceServers: [
-      {
-        urls: 'turn:localhost:3478',
-        username: 'a',
-        credential: 'b'
-      }
-    ]
-  }
-  peerConnection = new RTCPeerConnection(iceConfiguration);
+
+let pushPeerConnection: RTCPeerConnection
+let acceptPeerConnection: RTCPeerConnection
+let OFFER: RTCSessionDescriptionInit
+
+export function init() {
+  pushPeerConnection = turnServer()
+  acceptPeerConnection = turnServer()
+}
+
+function turnServer(): RTCPeerConnection {
+  let peerConnection = new RTCPeerConnection(iceConfiguration);
   connectionState(peerConnection)
+  return peerConnection
 }
 
 function connectionState(peerConnection: RTCPeerConnection) {
@@ -24,28 +25,46 @@ function connectionState(peerConnection: RTCPeerConnection) {
 }
 
 export function pushClient(localStream: MediaStream) {
-  console.log("开始推流", peerConnection)
+  console.log("开始推流", pushPeerConnection)
   localStream.getTracks().forEach(track => {
-    peerConnection.addTrack(track, localStream);
+    pushPeerConnection.addTrack(track, localStream);
     console.log("push...", track)
   });
+  pushPeerConnection.createOffer()
+    .then(offer => {
+      OFFER = offer
+      console.log("push OFFER:", OFFER)
+      return pushPeerConnection.setLocalDescription(offer);
+    })
+}
+
+export function pushClient2(localStream: MediaStream, acceptMediaElement: HTMLMediaElement) {
+  console.log("开始推流", pushPeerConnection)
+  localStream.getTracks().forEach(track => {
+    pushPeerConnection.addTrack(track, localStream);
+    console.log("push...", track)
+  });
+  pushPeerConnection.createOffer()
+    .then(offer => {
+      OFFER = offer
+      return pushPeerConnection.setLocalDescription(offer);
+    }).finally(() => {
+      console.log("push OFFER:", OFFER)
+      acceptClient(acceptMediaElement)
+    }
+  )
 }
 
 export function acceptClient(mediaElement: HTMLMediaElement) {
-  const iceConfiguration = {
-    iceServers: [
-      {
-        urls: 'turn:localhost:3478',
-        username: 'a',
-        credential: 'b'
-      }
-    ]
-  }
-  const acceptPeerConnection = new RTCPeerConnection(iceConfiguration);
   console.log("开始接受", acceptPeerConnection)
   acceptPeerConnection.addEventListener('track', event => {
     console.log("accept...", event)
-    const [remoteStream] = event.streams;
-    mediaElement.srcObject = remoteStream;
+    mediaElement.srcObject = event.streams[0];
+    // const [remoteStream] = event.streams;
+    // mediaElement.srcObject = remoteStream;
   });
+  console.log("accept OFFER:", OFFER)
+  acceptPeerConnection.setRemoteDescription(OFFER).then(r => {
+    console.log("accept RemoteDescription")
+  })
 }

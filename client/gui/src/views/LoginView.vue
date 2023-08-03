@@ -22,7 +22,7 @@
     <p>localVideo</p>
     <video id="localVideo" autoplay playsinline controls="false"></video>
     <p>acceptVideo</p>
-<!--    <video id="acceptVideo" autoplay playsinline muted></video>-->
+    <!--    <video id="acceptVideo" autoplay playsinline muted></video>-->
     <video id="acceptVideo" autoplay playsinline></video>
     <el-button type="primary" @click="test2">test</el-button>
     <div id="content">
@@ -38,7 +38,7 @@ import {ScreenBase64, Response, DesktopScreen} from "../../../../common/data";
 import {createCanvas, loadImage} from "canvas";
 import {Buffer} from "buffer"
 import {clientSocketService} from "@/ts/socket/client";
-import {acceptClient, pushClient, turnServer} from "@/ts/DisplayMedia";
+import {acceptClient, init, pushClient, pushClient2} from "@/ts/DisplayMedia";
 
 export default defineComponent({
   name: "LoginView",
@@ -61,7 +61,7 @@ export default defineComponent({
   //   },
   // },
   mounted() {
-    turnServer()
+    init()
   },
   methods: {
     test2() {
@@ -75,8 +75,9 @@ export default defineComponent({
           console.log('Got MediaStream:', stream);
           let videoElement = document.querySelector("#localVideo") as HTMLMediaElement;
           videoElement!!.srcObject = stream;
-          pushClient(stream)
-          acceptClient(document.querySelector("#acceptVideo")  as HTMLMediaElement)
+          pushClient2(stream, document.querySelector("#acceptVideo") as HTMLMediaElement)
+          // pushClient(stream)
+          // acceptClient(document.querySelector("#acceptVideo")  as HTMLMediaElement)
         })
         .catch(error => {
           console.error('Error accessing media devices.', error);
