@@ -19,11 +19,11 @@
     <!--        <el-button type="primary" @click="desktopContinued">恢复</el-button>-->
     <!--      </el-col>-->
     <!--    </el-row>-->
-    <p>localVideo</p>
+    <p>=========================localVideo===================================</p>
     <video id="localVideo" autoplay playsinline controls="false"></video>
-    <p>acceptVideo</p>
-    <!--    <video id="acceptVideo" autoplay playsinline muted></video>-->
-    <video id="acceptVideo" autoplay playsinline></video>
+    <p>=========================acceptVideo==================================</p>
+    <!--        <video id="acceptVideo" autoplay playsinline muted></video>-->
+    <video id="acceptVideo" autoplay playsinline controls="false"></video>
     <el-button type="primary" @click="test2">test</el-button>
     <div id="content">
       <img :src="imgUrl" alt="">

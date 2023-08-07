@@ -1,4 +1,20 @@
 // https://webrtc.org/getting-started/turn-server?hl=zh-cn
+class Configuration implements RTCConfiguration {
+  bundlePolicy?: RTCBundlePolicy = 'max-bundle';
+  iceCandidatePoolSize?: 2;
+  iceTransportPolicy?: RTCIceTransportPolicy = "relay";
+  rtcpMuxPolicy?: RTCRtcpMuxPolicy = "require";
+  iceServers?: RTCIceServer[] = [
+    {
+      urls: ['turn:localhost:3478?transport=udp'],
+      username: 'clenet',
+      credential: 'clenet123',
+      credentialType: "password"
+    },{
+      urls: ['stun:localhost:3478']
+    },
+  ];
+}
 
 let pushPeerConnection: RTCPeerConnection
 let acceptPeerConnection: RTCPeerConnection
@@ -10,7 +26,7 @@ export function init() {
 }
 
 function turnServer(): RTCPeerConnection {
-  let peerConnection = new RTCPeerConnection(iceConfiguration);
+  let peerConnection = new RTCPeerConnection(new Configuration());
   connectionState(peerConnection)
   return peerConnection
 }
@@ -18,10 +34,12 @@ function turnServer(): RTCPeerConnection {
 function connectionState(peerConnection: RTCPeerConnection) {
   console.log("peerConnection", peerConnection)
   peerConnection.addEventListener('connectionstatechange', event => {
-    if (peerConnection.connectionState === 'connected') {
-      console.log("RTCPeerConnection 连接成功")
-    }
+    console.log("RTCPeerConnection 连接状态发生改变:", event)
   });
+  peerConnection.addEventListener('icecandidateerror', event => {
+    console.log("RTCPeerConnection  ICE 协商错误:", event)
+  });
+
 }
 
 export function pushClient(localStream: MediaStream) {
@@ -59,9 +77,9 @@ export function acceptClient(mediaElement: HTMLMediaElement) {
   console.log("开始接受", acceptPeerConnection)
   acceptPeerConnection.addEventListener('track', event => {
     console.log("accept...", event)
-    mediaElement.srcObject = event.streams[0];
-    // const [remoteStream] = event.streams;
-    // mediaElement.srcObject = remoteStream;
+    // mediaElement.srcObject = event.streams[1];
+    const [remoteStream] = event.streams;
+    mediaElement.srcObject = remoteStream;
   });
   console.log("accept OFFER:", OFFER)
   acceptPeerConnection.setRemoteDescription(OFFER).then(r => {
