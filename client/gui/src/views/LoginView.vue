@@ -24,7 +24,7 @@
     <p>=========================acceptVideo==================================</p>
     <!--        <video id="acceptVideo" autoplay playsinline muted></video>-->
     <video id="acceptVideo" autoplay playsinline controls="false"></video>
-    <el-button type="primary" @click="test2">test</el-button>
+    <el-button type="primary" @click="push">开始推流</el-button>
     <div id="content">
       <img :src="imgUrl" alt="">
     </div>
@@ -33,12 +33,7 @@
 </template>
 <script lang="ts">
 import {defineComponent} from 'vue'
-import {desktopService} from "@/ts/desktop"
-import {ScreenBase64, Response, DesktopScreen} from "../../../../common/data";
-import {createCanvas, loadImage} from "canvas";
-import {Buffer} from "buffer"
-import {clientSocketService} from "@/ts/socket/client";
-import {acceptClient, init, pushClient, pushClient2} from "@/ts/DisplayMedia";
+import {init, pushClient} from "@/ts/DisplayMedia2";
 
 export default defineComponent({
   name: "LoginView",
@@ -49,22 +44,11 @@ export default defineComponent({
       timer: 0,
     }
   },
-  // sockets: {
-  //   connect: function (data: any) {
-  //     console.log('connect', data)
-  //   },
-  //   disconnect: function (data: any) {
-  //     console.log('disconnect', data)
-  //   },
-  //   reconnect: function (data: any) {
-  //     console.log('reconnect', data)
-  //   },
-  // },
   mounted() {
     init()
   },
   methods: {
-    test2() {
+    push() {
       const constraints = {
         'video': true,
         'audio': true
@@ -72,72 +56,30 @@ export default defineComponent({
       // navigator.mediaDevices.getUserMedia(constraints)
       navigator.mediaDevices.getDisplayMedia(constraints)
         .then(stream => {
-          console.log('Got MediaStream:', stream);
-          let videoElement = document.querySelector("#localVideo") as HTMLMediaElement;
-          videoElement!!.srcObject = stream;
-          pushClient2(stream, document.querySelector("#acceptVideo") as HTMLMediaElement)
-          // pushClient(stream)
-          // acceptClient(document.querySelector("#acceptVideo")  as HTMLMediaElement)
+          pushClient(stream)
         })
         .catch(error => {
           console.error('Error accessing media devices.', error);
         });
 
     },
-    test() {
-      clientSocketService.joinRoom(this.$data.roomId, () => {
-        const canvas = createCanvas(2000, 2000)
-        const ctx = canvas.getContext('2d')
-        clientSocketService.screen((aResponse: Response<DesktopScreen>) => {
-          console.log("Screen aResponse:", aResponse)
-          const screen = aResponse.data!.screen!
-          let imgBufferBase64 = Buffer.from(screen.imgBuffer).toString("base64")
-          let url = `data:image/${screen!.extension!!};base64,${imgBufferBase64}`
-          loadImage(url).then((image) => {
-            ctx.save()
-            ctx.drawImage(image, 50, 0, 1780, 1080)
-            this.$data.imgUrl = canvas.toDataURL()
-            ctx.restore()
-          })
+    accept() {
+      const constraints = {
+        'video': true,
+        'audio': true
+      }
+      // navigator.mediaDevices.getUserMedia(constraints)
+      navigator.mediaDevices.getDisplayMedia(constraints)
+        .then(stream => {
+          let videoElement = document.querySelector("#localVideo") as HTMLMediaElement;
+          videoElement!!.srcObject = stream;
+          pushClient(stream)
+          // acceptClient(document.querySelector("#acceptVideo")  as HTMLMediaElement)
         })
-      })
-    },
-    desktopInit() {
-      desktopService.desktopInit()
-    },
-    desktopSuspend() {
-      clearInterval(this.timer)
-      desktopService.desktopSuspend()
-    },
-    desktopContinued() {
-      desktopService.desktopContinued()
-      this.pullDesktop()
-    },
-    applyJoinRoom() {
-      desktopService.applyJoinRoom(this.$data.roomId, () => {
-        // this.pullDesktop()
-      })
-    },
-    pullDesktop() {
-      const canvas = createCanvas(1800, 1000)
-      const ctx = canvas.getContext('2d')
-      this.timer = Number(setInterval(() => {
-        desktopService.pullDesktop(this.$data.roomId, (promise: Promise<Response<ScreenBase64>>) => {
-          promise.then(aResponse => {
-            console.log("Screen aResponse:", aResponse)
-            if (aResponse.data == null) return
-            let url = `data:image/${aResponse.data.extension};base64,${aResponse.data.imgBufferBase64}`
-            loadImage(url).then((image) => {
-              ctx.drawImage(image, 50, 0, 1000, 800)
-              this.$data.imgUrl = canvas.toDataURL()
-            })
-            // this.$data.imgUrl = "data:image/jpg;base64," + aResponse.data?.imgBufferBase64
-          }).catch(aResponse => {
-            // 失败的处理函数
-            console.log(aResponse)
-          })
-        })
-      }, 1000))
+        .catch(error => {
+          console.error('Error accessing media devices.', error);
+        });
+
     }
   }
 })

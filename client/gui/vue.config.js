@@ -27,8 +27,8 @@ module.exports = defineConfig({
   devServer: {
     port: port,
     open: true,
-    host: "localhost",
-    https: false,
+    host: "192.168.50.71",
+    https: true,
     proxy: {
       [process.env.VUE_APP_BASE_API]: {
         // client 地址
