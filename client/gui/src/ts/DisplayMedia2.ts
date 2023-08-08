@@ -4,7 +4,7 @@ import {clientSocketService} from "./socket/client"
 // https://webrtc.org/getting-started/turn-server?hl=zh-cn
 class Configuration implements RTCConfiguration {
   // bundlePolicy?: RTCBundlePolicy = 'max-bundle';
-  // iceCandidatePoolSize?: 2;
+  // iceCandidatePoolSize?: 0;
   iceTransportPolicy?: RTCIceTransportPolicy = "relay";
   // rtcpMuxPolicy?: RTCRtcpMuxPolicy = "require";
   iceServers?: RTCIceServer[] = [
@@ -22,6 +22,8 @@ class Configuration implements RTCConfiguration {
 
 let peerConnection: RTCPeerConnection
 const TOPIC = "offer"
+let ANSWER: any
+let OFFER: any
 
 export function init() {
   peerConnection = turnServer()
@@ -29,10 +31,26 @@ export function init() {
 }
 
 function webSocket() {
-  clientSocketService.subscribe(TOPIC, (data: any) => {
-    peerConnection.setRemoteDescription(data).then(r => {
-      console.log("设置接收时的 setRemoteDescription ", data)
-    })
+  clientSocketService.subscribe(TOPIC, (description: Description) => {
+    if (description.type == "offer") {
+      OFFER = description.data
+      peerConnection.setRemoteDescription(OFFER).then(() => {
+        console.log("设置 offer ", OFFER)
+        peerConnection.createAnswer()
+          .then(answer => {
+            ANSWER = answer
+            peerConnection.setLocalDescription(ANSWER).then(r => {
+              console.log("设置 answer ", ANSWER)
+              clientSocketService.send(TOPIC, new Description("answer", ANSWER))
+            })
+          })
+      })
+    } else if (description.type == "answer") {
+      ANSWER = description.data
+      peerConnection.setRemoteDescription(description.data).then(() => {
+        console.log("设置 answer ", ANSWER)
+      })
+    }
   })
 }
 
@@ -58,7 +76,29 @@ function connectionState(peerConnection: RTCPeerConnection) {
   peerConnection.addEventListener('connectionstatechange', (event: Event) => {
     console.log("新 track 添加到连接:", event)
   });
+  peerConnection.addEventListener('icecandidate', (event: any) => {
+    console.log("ICE 收集均已完成:", event)
+    let tmpPeerConnection = event.target;
+    let iceCandidate = event.candidate
+    if (iceCandidate) {
+      let newIceCandidate = new RTCIceCandidate(iceCandidate);
+      let otherPeer = (tmpPeerConnection == peerConnection) ? tmpPeerConnection : peerConnection
+      otherPeer.addIceCandidate(newIceCandidate)
+        .then(() => {
+          console.log("添加 iceCandidate 完成")
+        })
+    }
+  });
+  peerConnection.addEventListener('track', (event: RTCTrackEvent) => {
+    console.log("接受流任务 :", event)
+    acceptClient(event.streams)
+  });
+}
 
+function acceptClient(streams: ReadonlyArray<MediaStream>) {
+  let acceptVideoMediaElement = document.querySelector("#acceptVideo") as HTMLMediaElement
+  const [remoteStream] = streams;
+  acceptVideoMediaElement.srcObject = remoteStream;
 }
 
 export function pushClient(localStream: MediaStream) {
@@ -70,21 +110,24 @@ export function pushClient(localStream: MediaStream) {
     peerConnection.addTrack(track, localStream);
     console.log("推流任务 :", track)
   });
+  if (OFFER != undefined) {
+    console.warn("已经存在 offer，跳过协商")
+    return
+  }
   // 多媒体协商
   peerConnection.createOffer()
     .then(offer => {
-      console.log("设置推送时的 setLocalDescription ", offer)
-      clientSocketService.send(TOPIC, offer)
+      OFFER = offer
       return peerConnection.setLocalDescription(offer);
-    })
-  acceptClient()
+    }).then(() => {
+    console.log("设置推送时的 setLocalDescription ", OFFER)
+    clientSocketService.send(TOPIC, new Description("offer", OFFER))
+  })
 }
 
-export function acceptClient() {
-  peerConnection.addEventListener('track', (event: RTCTrackEvent) => {
-    console.log("接受流任务 :", event)
-    let acceptVideoMediaElement = document.querySelector("#acceptVideo") as HTMLMediaElement
-    const [remoteStream] = event.streams;
-    acceptVideoMediaElement.srcObject = remoteStream;
-  });
+export class Description {
+  constructor(public type: string, // offer answer
+              public data: any,
+  ) {
+  }
 }

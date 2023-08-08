@@ -12,6 +12,6 @@ createApp(App)
   .use(ElementPlus)
   .mount('#app')
 
-const SOCKET_PROT = 443
-const connection = "https://192.168.50.71:" + SOCKET_PROT
+const SOCKET_PROT = 8000
+const connection = "http://10.30.20.154:" + SOCKET_PROT
 clientSocketService.init(connection);

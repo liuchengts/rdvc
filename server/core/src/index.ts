@@ -11,7 +11,7 @@ import {serverSocketService} from "./ts/socket/server";
 
 const app = express();
 const PORT = 3000;
-const SOCKET_PORT = 443;
+const SOCKET_PORT = 8000;
 app.use(express.static('public'))
 app.use(express.static('node_modules'))
 // app.engine('html', engine({

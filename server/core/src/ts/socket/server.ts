@@ -42,7 +42,7 @@ class ServerSocketServiceImpl implements ServerSocketService {
     init(port: number, httpsServer: https.Server) {
         this.socket = new Server(httpsServer, {
             cors: {
-                origin: "https://192.168.50.71:" + port,
+                origin: "http://10.30.20.154:" + port,
                 credentials: true
             }
         });
